@@ -392,6 +392,7 @@
     "button-groups.less",
     "labels.less",
     "badges.less",
+    "thumbnails.less",
     "alerts.less",
     "progress-bars.less",
     "panels.less",
@@ -399,5 +400,5 @@
     "close.less"
   ],
   "js": [],
-  "customizerUrl": "https://getbootstrap.com/docs/3.3/customize/?id=0f6a0470edbfd1b15b80fb49922e8a2a"
+  "customizerUrl": "http://getbootstrap.com/docs/3.3/customize/?id=4a65370be08c912b1b7c90926866e534"
 }
