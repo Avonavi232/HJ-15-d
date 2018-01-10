@@ -25,12 +25,11 @@ $dark: #7b7b7b
   height: 12rem
 
 .app-logo
+  padding-top: 1rem
   span
     line-height: 12rem
-    font: 4rem 'Kristen ITC Regular', sans-serif
+    font: 3.5rem 'Kristen ITC Regular', sans-serif
     color: $accent
-    &:before
-      content: '\2764'
 
 .app-upload
   text-align: right
@@ -105,13 +104,11 @@ $dark: #7b7b7b
 .stat
   color: white
   font-size: 2rem
-  &:before
-    margin-right: .5rem
+  [class^="icon"], [class^=" icon"]
     transition: all .2s
-  &:hover:before
+  &:hover [class^="icon"],
+  &:hover [class^=" icon"]
     color: $accent
-  &#{&}_likes:before
-    content: '\2764'
 
 
 /***********************************/
@@ -126,9 +123,10 @@ $dark: #7b7b7b
   outline: none
   background-color: transparent
   font: 2rem 'Roboto Condensed', sans-serif
-  padding: 10px 20px
-  border-radius: 5px
+  padding: 5px 20px
+  border-radius: 10px
   transition: all .3s
+  font-size: 1.6rem
   &#{&}_primary
     color: $accent
     border: 2px solid $accent
@@ -154,6 +152,8 @@ $dark: #7b7b7b
 /***********************************/
 .modal
   display: none
+  align-items: center
+  justify-content: center
   position: fixed
   left: 0
   top: 0
@@ -162,13 +162,12 @@ $dark: #7b7b7b
   background-color: rgba(0, 0, 0, .7)
   overflow: auto
   z-index: 1
+  transition: all .4s
   img
     max-width: 100%
     max-height: 100%
   .modal-content
-    background-color: #fff
-    margin: 15% auto
-    //padding: 20px
+    background-color: #f3f2f2
     border: 1px solid #888
   &__close
     user-select: none
@@ -178,15 +177,133 @@ $dark: #7b7b7b
     font-size: 3rem
     font-weight: bold
     transition: all .2s
-    margin-top: -1.5rem
     &:hover
       color: darken($dark, 20%)
-  &__footer, &__header
+  &__footer
     padding: 1.5rem 0
   &__footer
+    text-align: center
     button
-      float: right
       margin-left: 1.5rem
+      padding-left: 3rem
+      padding-right: 3rem
+
+.fadeIn
+  animation-name: fadeIn
+  animation-duration: .3s
+  animation-fill-mode: forwards
+.fadeOut
+  animation-name: fadeOut
+  animation-duration: .3s
+  animation-fill-mode: forwards
+@keyframes fadeIn
+  from
+    opacity: 0
+  to
+    opacity: 1
+@keyframes fadeOut
+  from
+    opacity: 1
+  to
+    opacity: 0
+
+body.modal-opened
+  overflow: hidden
+
+/***********UPLOADS-MODAL***********/
+.upload-modal
+  .modal__body
+    padding: 0 4rem
+  &__open-pic
+    margin-bottom: 3.5rem
+  &__preview
+    display: inline-block
+    vertical-align: middle
+    img
+      max-height: 290px
+      max-width: 290px
+      @media (min-width: 992px)
+        max-width: 415px
+        max-height: 415px
+      @media (min-width: 1200px)
+        max-width: 515px
+        max-height: 515px
+  &__drop-area
+    display: inline-block
+    vertical-align: middle
+    background-color: #fff
+    width: 290px
+    height: 290px
+    text-align: center
+    font: 2.2rem 'Roboto', sans-serif
+    color: #dcdcdc
+    border: 4px dashed #dcdcdc
+    @media (min-width: 992px)
+      width: 415px
+      height: 415px
+    @media (min-width: 1200px)
+      width: 515px
+      height: 515px
+    p
+      width: 100%
+      height: 100%
+      display: flex
+      justify-content: center
+      align-items: center
+
+
+.justified
+  text-align: justify
+  &:after
+    width: 100%
+    height: 0
+    visibility: hidden
+    overflow: hidden
+    content: ""
+    display: inline-block
+
+/***********IMAGE-MODAL*************/
+.show-pic-modal
+  .image
+    &-natural
+      width: 100%
+      height: 100%
+      img
+        max-width: 100%
+        max-height: 100%
+    &-author
+      text-align: left
+      color: $accent
+      font-weight: bold
+      font-size: 2rem
+      display: inline-block
+      vertical-align: middle
+    &-date
+      font-size: 1rem
+      display: inline-block
+      vertical-align: middle
+    &-comments
+      max-height: 200px
+      overflow-y: scroll
+    &-comment
+      margin-bottom: 1rem
+      &:last-of-type
+        margin-bottom: 0
+      &-author
+       font-weight: bold
+    &-action.stat
+      display: inline-block
+      color: $accent
+      margin: 1.5rem
+      margin-left: 0
+      &:last-of-type
+        margin-right: 0
+
+
+
+
+
+
 /***********************************/
 
 
