@@ -244,6 +244,14 @@ body.modal-opened
     font: 2.2rem 'Roboto', sans-serif
     color: #dcdcdc
     border: 4px dashed #dcdcdc
+    &#{&}_dragover
+      border-color: $accent
+      p
+        color: $accent
+        animation-name: dragOverP
+        animation-duration: 1s
+        animation-fill-mode: forwards
+
     @media (min-width: 992px)
       width: 415px
       height: 415px
@@ -257,6 +265,15 @@ body.modal-opened
       justify-content: center
       align-items: center
 
+@keyframes dragOverP
+  0%
+    transform: rotate(0deg)
+  33%
+    transform: rotate(20deg)
+  66%
+    transform: rotate(-20deg)
+  100%
+    transform: rotate(0deg)
 
 .justified
   text-align: justify

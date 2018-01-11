@@ -347,13 +347,14 @@
             </header>
             <main class="modal__body">
                 <div class="text-right">
-                    <button class="upload-modal__open-pic button button_secondary">Выбрать фото</button>
+                    <div>
+                        <button class="js-upload-input-replacer upload-modal__open-pic button button_secondary">Выбрать фото</button>
+                        <input class="js-upload-input" type="file"  hidden>
+                    </div>
                 </div>
                 <div class="justified">
-                    <div class="upload-modal__preview">
-                        <img src="public/img/1.jpg" alt="">
-                    </div>
-                    <div class="upload-modal__drop-area js-drop-area">
+                    <div class="js-upload-image-preview upload-modal__preview"></div>
+                    <div class="upload-modal__drop-area upload-modal__drop-area js-drop-area">
                         <p>Перетащите фото в эту область</p>
                     </div>
                 </div>

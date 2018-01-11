@@ -103,5 +103,68 @@ for (const btn of document.querySelectorAll('.js-image-sidebar-toggle')){
     })
 }
 
+/****************************************/
+/****************************************/
+/****************************************/
+
+class ImageLoader{
+    constructor(dropArea){
+        this.dropArea = dropArea;
+        this.dropAreaInner = this.dropArea.firstElementChild;
+        this.inputReplacer = document.querySelector('.js-upload-input-replacer');
+        this.input = document.querySelector('.js-upload-input');
+        this.preview = document.querySelector('.js-upload-image-preview');
+    }
+
+
+    getPreviewImg(files) {
+        wrt(files);
+        if (!files.length) return; //если массив пустой - выходим
+        if (files[0].type.indexOf('image') === -1) return; //если не картинка - выходим
+        return URL.createObjectURL(files[0]);
+    }
+    showPreviewImg(src){
+        const img = document.createElement('img');
+        img.src = src;
+        img.addEventListener('load', event => {
+            URL.revokeObjectURL(event.target.src);
+        });
+        this.preview.textContent = '';
+        this.preview.appendChild(img);
+    }
+
+
+    init(){
+        this.dropArea.addEventListener('drop', e => {
+            e.preventDefault();
+
+            const src = this.getPreviewImg(e.dataTransfer.files);
+            this.showPreviewImg(src);
+
+            //Уберем стилизующий класс
+            this.dropArea.classList.remove('upload-modal__drop-area_dragover');
+        });
+
+
+        //Стилизация области дропа при dragover
+        this.dropArea.addEventListener('dragover', e => {
+            e.preventDefault();
+
+            if(e.target === this.dropArea || e.target === this.dropAreaInner){
+                this.dropArea.classList.add('upload-modal__drop-area_dragover');
+            }
+        });
+
+
+        //Делегируем клик по заменителю инпута самому инпуту
+        this.inputReplacer.addEventListener('click', ()=>{
+           this.input.click();
+        });
+    }
+}
+
+const dropArea = new ImageLoader(document.querySelector('.js-drop-area'));
+dropArea.init();
+
 
 
