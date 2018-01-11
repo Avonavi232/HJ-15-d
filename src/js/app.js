@@ -135,6 +135,17 @@ class ImageLoader{
 
 
     init(){
+        //Обработка загрузки картинки через инпут
+        this.input.addEventListener('change', e => {
+            e.preventDefault();
+
+            const src = this.getPreviewImg(e.currentTarget.files);
+            this.showPreviewImg(src);
+
+        });
+
+
+        //Обработка дропа картинки
         this.dropArea.addEventListener('drop', e => {
             e.preventDefault();
 
