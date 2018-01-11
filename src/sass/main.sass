@@ -44,10 +44,14 @@ $dark: #7b7b7b
 /*************HELPERS************/
 /***********************************/
 .box
-  height: 200px
-  width: 200px
+  height: 100px
+  width: 100px
   border: 2px solid green
   background-color: #ff94e9
+.bottomed
+  position: absolute
+  bottom: 0
+  width: 100%
 
 .container
   //border: 1px solid red
@@ -102,9 +106,11 @@ $dark: #7b7b7b
   text-align: center
 
 .stat
+  display: inline-block
   color: white
   font-size: 2rem
   [class^="icon"], [class^=" icon"]
+    display: inline-block
     transition: all .2s
   &:hover [class^="icon"],
   &:hover [class^=" icon"]
@@ -298,6 +304,46 @@ body.modal-opened
       margin-left: 0
       &:last-of-type
         margin-right: 0
+      span[class^="icon"],
+      span[class^=" icon"]
+        animation-name: iconOut
+        animation-duration: .2s
+        animation-fill-mode: forwards
+        animation-timing-function: linear
+        cursor: pointer
+      & span[class^="icon"]:hover,
+      & span[class^=" icon"]:hover
+        animation-name: iconIn
+        animation-delay: 0s
+        animation-duration: .2s
+    /**************/
+    &-art
+      position: absolute
+      left: 15px
+      right: 15px
+      top: 0
+      bottom: 0
+      transform: translateX(-600px)
+      transition: all .3s
+    &-infoblock
+      transform: translateX(0px)
+      transition: all .3s
+    &-sidebar
+      position: relative
+      overflow: hidden
+
+
+
+@keyframes iconIn
+  from
+    transform: scale(1.0) rotate(0)
+  to
+    transform: scale(1.4) rotate(360deg)
+@keyframes iconOut
+  from
+    transform: scale(1.4) rotate(360deg)
+  to
+    transform: scale(1.0) rotate(0deg)
 
 
 
