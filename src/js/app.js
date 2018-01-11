@@ -66,9 +66,7 @@ class ImageSidebar{
 
 //Инициализация модальных окон
 const showPicModal = new Modal(document.querySelector('.js-show-pic-modal'));
-const uploadModal = new Modal(document.querySelector('.js-upload-modal'));
 showPicModal.init();
-uploadModal.init();
 
 
 //Ловим клик по миниатюре, используя делегирование событий
@@ -81,12 +79,6 @@ document.querySelector('.js-cards-container').addEventListener('click', (e) => {
             break; //не поймали, выходим из цикла
         }
     }
-});
-
-
-//Открываем модалку-загрузчик по клику на соотв.кнопке
-document.querySelector('.js-upload-pic').addEventListener('click', (e) => {
-    uploadModal.open();
 });
 
 
@@ -114,9 +106,15 @@ class ImageLoader{
         this.inputReplacer = document.querySelector('.js-upload-input-replacer');
         this.input = document.querySelector('.js-upload-input');
         this.preview = document.querySelector('.js-upload-image-preview');
+
+        this.modalOpenBtn = document.querySelector('.js-upload-pic-btn');
+        this.modalUploadCancelBtn = document.querySelector('.js-upload-cancel');
+        this.modalUploadAcceptBtn = document.querySelector('.js-upload-accept');
+        this.modal = new Modal(document.querySelector('.js-upload-modal'));
+        this.modal.init();
     }
 
-
+    //методы управления превьюшкой
     getPreviewImg(files) {
         wrt(files);
         if (!files.length) return; //если массив пустой - выходим
@@ -129,8 +127,17 @@ class ImageLoader{
         img.addEventListener('load', event => {
             URL.revokeObjectURL(event.target.src);
         });
-        this.preview.textContent = '';
+        this.removePreviewImg();
         this.preview.appendChild(img);
+    }
+    removePreviewImg(){
+        this.preview.textContent = '';
+    }
+
+    //При отмене загрузик подчищаем превью и закрываем модалку
+    uploadCancel(){
+        this.modal.close();
+        this.removePreviewImg();
     }
 
 
@@ -170,6 +177,18 @@ class ImageLoader{
         //Делегируем клик по заменителю инпута самому инпуту
         this.inputReplacer.addEventListener('click', ()=>{
            this.input.click();
+        });
+
+
+        //Открываем модалку-загрузчик по клику на соотв.кнопке
+        this.modalOpenBtn.addEventListener('click', (e) => {
+            this.modal.open();
+        });
+
+
+        //Обработка отмены загрузки
+        this.modalUploadCancelBtn.addEventListener('click', (e) => {
+            this.uploadCancel();
         });
     }
 }
