@@ -4,7 +4,10 @@ function wrt(d) {
     console.log(d);
 }
 
-//Функционал модалки
+
+/****************************************/
+/*************Функционал модалки*********/
+/****************************************/
 class Modal{
     constructor(modal){
         this.modal = modal;
@@ -40,8 +43,42 @@ class Modal{
         })
     }
 }
+/****************************************/
 
-//Управляет переключением сайдбара при просмотре иконки
+
+/****************************************/
+/*******имитация ответов сервера*********/
+/****************************************/
+class Server{
+    //Метод отдает всю ленту (массив объектов)
+    static getFeed(){
+        return fetch('./src/js/feed.json', {
+            method: 'GET'
+        });
+    }
+
+
+    //Метод отдает одну карточку по id (объект)
+    static getCard(id){
+        return fetch('./src/js/feed.json', {
+            method: 'GET'
+        })
+            .then( res => res.json() )
+            .then( data => {
+                return data.find((el, i) => {
+                    if (el.id === Number(id)){
+                        return el;
+                    }
+                });
+            } );
+    }
+}
+/****************************************/
+
+
+/****************************************/
+/******Поведение сайдбара модалки********/
+/****************************************/
 class ImageSidebar{
     constructor(classes){
         this.sidebar = document.querySelector('.' + classes.sidebar);
@@ -63,25 +100,6 @@ class ImageSidebar{
     }
 }
 
-
-//Инициализация модальных окон
-const showPicModal = new Modal(document.querySelector('.js-show-pic-modal'));
-showPicModal.init();
-
-
-//Ловим клик по миниатюре, используя делегирование событий
-document.querySelector('.js-cards-container').addEventListener('click', (e) => {
-    for (const curr of e.path){
-        if(curr.classList.contains('card-thumbnail')){
-            showPicModal.open();
-            break;
-        } else if(curr.tagName === 'BODY'){
-            break; //не поймали, выходим из цикла
-        }
-    }
-});
-
-
 //Инициализируем поведение сайдбара при просмотре картинки
 const imageSidebar = new ImageSidebar({
     sidebar: 'image-sidebar',
@@ -94,11 +112,12 @@ for (const btn of document.querySelectorAll('.js-image-sidebar-toggle')){
         imageSidebar.toggle();
     })
 }
-
-/****************************************/
-/****************************************/
 /****************************************/
 
+
+/****************************************/
+/*************ImageLoader****************/
+/****************************************/
 class ImageLoader{
     constructor(dropArea){
         this.dropArea = dropArea;
@@ -116,7 +135,6 @@ class ImageLoader{
 
     //методы управления превьюшкой
     getPreviewImg(files) {
-        wrt(files);
         if (!files.length) return; //если массив пустой - выходим
         if (files[0].type.indexOf('image') === -1) return; //если не картинка - выходим
         return URL.createObjectURL(files[0]);
@@ -195,6 +213,179 @@ class ImageLoader{
 
 const dropArea = new ImageLoader(document.querySelector('.js-drop-area'));
 dropArea.init();
+/****************************************/
+
+
+/****************************************/
+/****************FEED********************/
+/****************************************/
+class Feed{
+    static get feed(){
+        return document.querySelector('.js-feed');
+    }
+
+    //Методы для создания карточки-миниатюры
+    static createStat(className, stat) {
+        const td = document.createElement('td');
+
+        const p = document.createElement('p');
+        p.classList.add('stat', 'js-stat-likes');
+        td.appendChild(p);
+
+        const icon = document.createElement('span');
+        icon.classList.add(className);
+        p.appendChild(icon);
+
+        const title = document.createElement('span');
+        title.textContent = stat;
+        p.appendChild(title);
+
+        return td;
+    }
+
+    static createCard(card){
+        const container = document.createElement('div');
+        container.classList.add('card-thumbnail');
+        container.dataset.id = card.id;
+
+        const overlay = document.createElement('div');
+        overlay.classList.add('card-thumbnail__overlay');
+        container.appendChild(overlay);
+
+        const stats = document.createElement('div');
+        stats.classList.add('card-thumbnail__stats', 'stats');
+        container.appendChild(stats);
+
+        const table = document.createElement('table');
+        stats.appendChild(table);
+
+        const row = document.createElement('tr');
+        row.appendChild(Feed.createStat('icon-heart', card.likes));
+        row.appendChild(Feed.createStat('icon-bubble', card.comments));
+        table.appendChild(row.cloneNode(true));
+
+        row.textContent = '';
+        row.appendChild(Feed.createStat('icon-eye', card.seen));
+        row.appendChild(Feed.createStat('icon-pencil', card.art));
+        table.appendChild(row);
+
+        const img = document.createElement('img');
+        img.src = card.src;
+        container.appendChild(img);
+
+        return container;
+    }
+
+    static renderFeed(feed){
+        let counter = 0;
+        const fragment = document.createDocumentFragment();
+        for (const card of feed){
+            if (counter === 0) {
+                const newRow = document.createElement('div');
+                newRow.classList.add('row');
+                fragment.appendChild(newRow);
+            }
+            const curr = fragment.lastElementChild;
+
+            const col = document.createElement('div');
+            col.classList.add('col-sm-4');
+            curr.appendChild(col);
+            col.appendChild(Feed.createCard(card));
+
+            ++counter === 3 ? counter = 0 : '';
+        }
+        Feed.feed.textContent = '';
+        Feed.feed.appendChild(fragment);
+    }
+
+    static updFeed(){
+        Server.getFeed()
+            .then( res => res.json() )
+            .then( feed => Feed.renderFeed(feed));
+    }
+}
+
+Feed.updFeed();
+
+/****************************************/
+
+
+/****************************************/
+/***********Модалка просмотрщик**********/
+/****************************************/
+class ShowPicModal extends Modal{
+    constructor(modal){
+        super(modal);
+        this.pic = modal.querySelector('.js-image-natural');
+        this.likes = modal.querySelector('.js-image-like-counter');
+        this.comments = modal.querySelector('.js-image-comment-counter');
+        this.seen = modal.querySelector('.js-image-seen-counter');
+        this.art = modal.querySelector('.js-art-counter');
+        this.author = modal.querySelector('.js-image-author');
+        this.postDate = modal.querySelector('.js-image-date');
+        this.tags = modal.querySelector('.js-image-hashtags');
+        this.commentsList = modal.querySelector('.image-comments');
+        this.description = modal.querySelector('.js-image-description');
+
+    }
+
+    updateModalData(card){
+        return Server.getCard(card.dataset.id)
+            .then(cardData => {
+                //Картинка
+                this.pic.textContent = '';
+                const img = document.createElement('img');
+                img.src = cardData.src;
+                this.pic.appendChild(img);
+                return cardData;
+            })
+            .then( cardData => {
+                //Статы
+                this.likes.textContent = cardData.likes;
+                this.comments.textContent = cardData.comments;
+                this.seen.textContent = cardData.seen;
+                this.art.textContent = cardData.art;
+                return cardData;
+            } )
+            .then( cardData => {
+                //Остальное
+                this.author.textContent = cardData.author;
+                this.postDate.textContent = cardData.timestamp; //TODO: преобразовать timestamp в время
+                this.description.textContent = cardData.description;
+            });
+
+
+    }
+
+    showPic(card){
+        this.updateModalData(card)
+            .then( ()=>{
+                this.open();
+            } );
+    }
+}
+const showPicModal = new ShowPicModal(document.querySelector('.js-show-pic-modal'));
+showPicModal.init();
+
+//Ловим клик по миниатюре, используя делегирование событий
+document.querySelector('.js-feed').addEventListener('click', (e) => {
+    for (const curr of e.path){
+        if(curr.classList.contains('card-thumbnail')){
+            showPicModal.showPic(curr);
+            break;
+        } else if(curr.tagName === 'BODY'){
+            break; //не поймали, выходим из цикла
+        }
+    }
+});
+
+/****************************************/
+
+
+
+
+
+
 
 
 
