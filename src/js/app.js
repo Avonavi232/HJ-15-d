@@ -441,10 +441,8 @@ class Art {
             this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         });
 
-        document.addEventListener('mousedown', e => {
+        this.canvas.addEventListener('mousedown', e => {
             e.preventDefault();
-            if (!this.checkBoundaries(e.target))
-                return;
             this.mouseHolded = 1;
             const curve = [];
             curve.push([e.offsetX, e.offsetY, this.brushColor, this.brushWidth]);
@@ -456,18 +454,15 @@ class Art {
             this.mouseHolded = 0;
         });
 
-        document.addEventListener('mousemove', e => {
+        this.canvas.addEventListener('mousemove', e => {
             e.preventDefault();
-            if (!this.checkBoundaries(e.target))
-                return;
             if (!this.mouseHolded) return;
             this.curves[this.curves.length - 1].push([e.offsetX, e.offsetY, this.brushColor, this.brushWidth]);
             this.needsRepaint = true;
         });
 
-        document.addEventListener('dblclick', (e) => {
-            if (!this.checkBoundaries(e.target))
-                return;
+        this.canvas.addEventListener('dblclick', (e) => {
+            e.preventDefault();
             this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
             this.ctx.drawImage(this.img, 0, 0, this.canvas.width, this.canvas.height);
             this.curves = [];
@@ -618,7 +613,6 @@ document.querySelector('.js-feed').addEventListener('click', (e) => {
 });
 
 /****************************************/
-
 
 
 
