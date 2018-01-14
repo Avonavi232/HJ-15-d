@@ -50,16 +50,17 @@ class Modal{
 /*******имитация ответов сервера*********/
 /****************************************/
 class Server{
+    constructor(){
+        this.art = null;
+    }
     //Метод отдает всю ленту (массив объектов)
-    static getFeed(){
+    getFeed(){
         return fetch('./src/js/feed.json', {
             method: 'GET'
         });
     }
-
-
     //Метод отдает одну карточку по id (объект)
-    static getCard(id){
+    getCard(id){
         return fetch('./src/js/feed.json', {
             method: 'GET'
         })
@@ -72,7 +73,19 @@ class Server{
                 });
             } );
     }
+
+    updArtState(state, id){
+        if (state === null){
+            this.art = null;
+        } else {
+            this.art = {
+                status: true,
+                id: id
+            }
+        }
+    }
 }
+const connection = new Server();
 /****************************************/
 
 
@@ -299,7 +312,7 @@ class Feed{
     }
 
     static updFeed(){
-        Server.getFeed()
+        connection.getFeed()
             .then( res => res.json() )
             .then( feed => Feed.renderFeed(feed));
     }
@@ -307,6 +320,167 @@ class Feed{
 
 Feed.updFeed();
 
+/****************************************/
+
+
+/****************************************/
+/***********Творческий режим*************/
+/****************************************/
+class Art {
+    constructor(imgContainer, controls){
+        this.imgContainer = imgContainer;
+        this.img = imgContainer.querySelector('img');
+
+        this.canvas = document.createElement('canvas');
+        this.canvas.height = this.img.clientHeight;
+        this.canvas.width = this.img.clientWidth;
+        this.ctx = this.canvas.getContext('2d');
+
+        this.brushColorInput = controls.querySelector('.art-controls-color');
+        this.brushWidthInput = controls.querySelector('.art-controls-size');
+        this.brushColor = this.brushColorInput.value;
+        this.brushWidth = this.brushWidthInput.value;
+
+        this.ctx.lineJoin = 'round';
+        this.ctx.lineCap = 'round';
+
+        this.shiftPressed = 0; //состояние кнопки Shift (нажато/не нажато)
+        this.needsRepaint = false; //требуется ли перерисовка
+        this.curves = []; //массив зафиксированных при mousemove кривых
+        this.mouseHolded = 0; //состояние левой кн. мыши (нажато/не нажато)
+    }
+
+    repaint() {
+        //Функция перерисовки всей канвы
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        this.ctx.drawImage(this.img, 0, 0, this.canvas.width, this.canvas.height);
+
+        for(const curve of this.curves){
+            this.circle(curve[0]);
+            this.smoothCurve(curve);
+        }
+    }
+
+    circle(point) {
+        //Функция рисует и заливает точку по переданным координатам
+        this.ctx.beginPath();
+        this.ctx.arc(point[0], point[1], point[3] / 2, 0, 2 * Math.PI);
+        this.ctx.save();
+        this.ctx.fillStyle = point[2];
+        this.ctx.lineWidth = point[3];
+        this.ctx.fill();
+        this.ctx.restore();
+    }
+
+    smoothCurveBetween (p1, p2) {
+        //Функция добавляет точку для квадратичной кривой Bezier
+        //p1 - end point
+        //cp - control point
+
+        const cpx = ( p1[0] + p2[0] ) / 2;
+        const cpy = ( p1[1] + p2[1] ) / 2;
+        this.ctx.quadraticCurveTo(p1[0], p1[1], cpx, cpy); //почему такая последовательность? в спецификации не такая написана.
+
+    }
+
+    smoothCurve(points) {
+        this.ctx.beginPath();
+
+        this.ctx.moveTo(points[0][0], points[0][1]);
+
+        for(let i = 1; i < points.length - 1; i++) {
+            this.smoothCurveBetween(points[i], points[i + 1]);
+        }
+
+        this.ctx.strokeStyle = points[points.length-1][2];
+        this.ctx.lineWidth = points[points.length-1][3];
+        this.ctx.stroke();
+    }
+
+    tick(){
+        this.shiftPressedControl();
+
+        if (this.needsRepaint) {
+            this.repaint();
+            this.needsRepaint = false;
+        }
+        window.requestAnimationFrame(()=>{
+            this.tick();
+        });
+    }
+
+    shiftPressedControl(){
+        //Следим за нажатием Shift, состояние храним в переменной shiftPressed
+        document.addEventListener('keydown', e => {
+            e.shiftKey ? this.shiftPressed = 1 : this.shiftPressed = 0;
+        });
+        document.addEventListener('keyup', e => {
+            e.shiftKey ? this.shiftPressed = 1 : this.shiftPressed = 0;
+        });
+    }
+
+    checkBoundaries(target){
+        if (target !== this.canvas)
+            return 0;
+        return 1;
+    }
+
+    init(){
+        this.imgContainer.textContent = '';
+        this.ctx.drawImage(this.img, 0, 0, this.canvas.width, this.canvas.height);
+        this.imgContainer.appendChild(this.canvas);
+
+        this.shiftPressedControl(); //запускаем слежение за shift
+        this.tick(); //запускаем тик
+
+        window.addEventListener('resize', () => {
+            // this.canvas.height = window.innerHeight;
+            // this.canvas.width = window.innerWidth;
+            this.ctx.lineJoin = 'round';
+            this.ctx.lineCap = 'round';
+            this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        });
+
+        document.addEventListener('mousedown', e => {
+            e.preventDefault();
+            if (!this.checkBoundaries(e.target))
+                return;
+            this.mouseHolded = 1;
+            const curve = [];
+            curve.push([e.offsetX, e.offsetY, this.brushColor, this.brushWidth]);
+            (this.curves).push(curve);
+            this.needsRepaint = true;
+        });
+
+        document.addEventListener('mouseup', () => {
+            this.mouseHolded = 0;
+        });
+
+        document.addEventListener('mousemove', e => {
+            e.preventDefault();
+            if (!this.checkBoundaries(e.target))
+                return;
+            if (!this.mouseHolded) return;
+            this.curves[this.curves.length - 1].push([e.offsetX, e.offsetY, this.brushColor, this.brushWidth]);
+            this.needsRepaint = true;
+        });
+
+        document.addEventListener('dblclick', (e) => {
+            if (!this.checkBoundaries(e.target))
+                return;
+            this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+            this.ctx.drawImage(this.img, 0, 0, this.canvas.width, this.canvas.height);
+            this.curves = [];
+        });
+
+        this.brushColorInput.addEventListener('change', e => {
+            this.brushColor = e.target.value;
+        });
+        this.brushWidthInput.addEventListener('change', e => {
+            this.brushWidth = e.target.value;
+        })
+    }
+}
 /****************************************/
 
 
@@ -329,8 +503,25 @@ class ShowPicModal extends Modal{
 
     }
 
+    renderComment(author, body){
+        const container = document.createElement('div');
+        container.classList.add('image-comment');
+
+        const authorSpan = document.createElement('span');
+        authorSpan.classList.add('image-comment-author');
+        authorSpan.textContent = author + ': ';
+        container.appendChild(authorSpan);
+
+        const bodySpan = document.createElement('span');
+        bodySpan.classList.add('image-comment-body');
+        bodySpan.textContent = body;
+        container.appendChild(bodySpan);
+
+        return container;
+    }
+
     updateModalData(card){
-        return Server.getCard(card.dataset.id)
+        return connection.getCard(card.dataset.id)
             .then(cardData => {
                 //Картинка
                 this.pic.textContent = '';
@@ -352,18 +543,65 @@ class ShowPicModal extends Modal{
                 this.author.textContent = cardData.author;
                 this.postDate.textContent = cardData.timestamp; //TODO: преобразовать timestamp в время
                 this.description.textContent = cardData.description;
+
+                for (const tag of cardData.tags){
+                    const span = document.createElement('span');
+                    span.textContent = '#' + tag;
+                    this.tags.appendChild(span);
+                }
+
+                for (const comment of cardData.commentsList){
+                    this.commentsList.appendChild(this.renderComment(comment.author, comment.body));
+                }
             });
 
 
     }
 
     showPic(card){
+        this.id = card.dataset.id;
         this.updateModalData(card)
             .then( ()=>{
                 this.open();
             } );
     }
+
+    open(){
+        this.img = this.pic.querySelector('img');
+        super.open();
+    }
+
+    close(){
+        this.pic.textContent = '';
+        this.likes.textContent = '';
+        this.comments.textContent = '';
+        this.seen.textContent = '';
+        this.art.textContent = '';
+        this.author.textContent = '';
+        this.postDate.textContent = '';
+        this.tags.textContent = '';
+        this.commentsList.textContent = '';
+        this.description.textContent = '';
+        super.close();
+    }
+
+    init(){
+        document.querySelector('.js-art-on').addEventListener('click', e => {
+            const img = this.pic;
+            const artTools = this.modal.querySelector('.image-art');
+            const art = new Art(img, artTools);
+            art.init();
+            connection.updArtState(true, this.id);
+        });
+        document.querySelector('.js-art-off').addEventListener('click', e => {
+            this.pic.textContent = '';
+            this.pic.appendChild(this.img);
+            connection.updArtState(null);
+        });
+        super.init();
+    }
 }
+
 const showPicModal = new ShowPicModal(document.querySelector('.js-show-pic-modal'));
 showPicModal.init();
 
@@ -380,6 +618,7 @@ document.querySelector('.js-feed').addEventListener('click', (e) => {
 });
 
 /****************************************/
+
 
 
 

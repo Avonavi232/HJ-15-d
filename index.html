@@ -37,11 +37,9 @@
                 <span class="modal__close js-modal-close">&times;</span>
             </header>
             <main class="modal__body">
-                <div class="row">
-                    <div class="col-sm-7">
-                        <div class="js-image-natural image-natural">
-                            <img src="public/img/6.jpg" alt="">
-                        </div>
+                <div class="row modal-content__row">
+                    <div class="col-sm-7 image-mainpic">
+                        <div class="js-image-natural image-natural"></div>
                     </div>
                     <div class="col-sm-5 image-sidebar">
                         <div class="image-infoblock">
@@ -50,11 +48,7 @@
                                 <div class="js-image-date image-date">24.01.2018 00:45</div>
                             </div>
                             <div class="js-image-description"></div>
-                            <div class="js-image-hashtags">
-                                <span>#girl</span>
-                                <span>#blablala</span>
-                                <span>#followforfollow</span>
-                            </div>
+                            <div class="js-image-hashtags"></div>
                             <div class="image-actions">
                                 <div class="js-image-like stat image-action">
                                     <span class="icon-heart"></span>
@@ -68,33 +62,21 @@
                                     <span class="icon-eye"></span>
                                     <span class="js-image-seen-counter">13</span>
                                 </div>
-                                <div class="js-image-sidebar-toggle stat image-action">
+                                <div class="js-art-on js-image-sidebar-toggle stat image-action">
                                     <span class="icon-pencil"></span>
                                     <span class="">DrawIt!</span>
                                 </div>
                             </div>
-                            <div class="image-comments">
-                                <div class="js-image-comment image-comment">
-                                    <span class="js-image-comment-author image-comment-author">anna.anna</span>
-                                    <span class="js-image-comment-body image-comment-body">Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt. Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit, sed quia non numquam eius modi tempora incidunt ut labore et dolore magnam aliquam quaerat voluptatem.</span>
-                                </div>
-                                <div class="js-image-comment image-comment">
-                                    <span class="js-image-comment-author image-comment-author">anna.anna</span>
-                                    <span class="js-image-comment-body image-comment-body">Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt. Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit, sed quia non numquam eius modi tempora incidunt ut labore et dolore magnam aliquam quaerat voluptatem.</span>
-                                </div>
-                                <div class="js-image-comment image-comment">
-                                    <span class="js-image-comment-author image-comment-author">anna.anna</span>
-                                    <span class="js-image-comment-body image-comment-body">Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt. Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit, sed quia non numquam eius modi tempora incidunt ut labore et dolore magnam aliquam quaerat voluptatem.</span>
-                                </div>
-                            </div>
+                            <div class="image-comments"></div>
                         </div>
                         <div class="image-art">
-                            <p>Здесь будет управление творческим режимом. Квадраты ниже - заглушки для будущих инструментов</p>
-                            <div class="box">1</div>
-                            <div class="box">2</div>
+                            <label>Выберите цвет: <input class="art-controls-color" type="text" value="#FF0000"></label>
+                            <br>
+                            <br>
+                            <label>Выберите размер кисти: <input class="art-controls-size" type="text" value="5"></label>
                             <div class="js-art-counter"></div>
                             <div class="text-center bottomed">
-                                <button class="js-image-sidebar-toggle button button_secondary">Stop It Please!</button>
+                                <button class="js-art-off js-image-sidebar-toggle button button_secondary">Stop It Please!</button>
                             </div>
                         </div>
                     </div>
