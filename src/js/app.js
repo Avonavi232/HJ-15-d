@@ -152,6 +152,7 @@ class ImageLoader{
         if (files[0].type.indexOf('image') === -1) return; //если не картинка - выходим
         return URL.createObjectURL(files[0]);
     }
+
     showPreviewImg(src){
         const img = document.createElement('img');
         img.src = src;
@@ -161,9 +162,47 @@ class ImageLoader{
         this.removePreviewImg();
         this.preview.appendChild(img);
     }
+
     removePreviewImg(){
         this.preview.textContent = '';
     }
+
+    showPreviewInfo(){
+        const container = document.createElement('div');
+        container.classList.add('upload-infoblock');
+
+        const authorContainer = document.createElement('div');
+        authorContainer.classList.add('justified');
+        container.appendChild(authorContainer);
+
+        const authorLabel = document.createElement('label');
+        authorLabel.setAttribute('for', 'label-upload-author');
+        authorLabel.textContent = 'Опубликовать от имени автора:';
+        authorContainer.appendChild(authorLabel);
+
+        const authorInput = document.createElement('input');
+        authorInput.id = 'label-upload-author';
+        authorInput.classList.add('js-upload-author');
+        authorContainer.appendChild(authorInput);
+
+
+        const descriptionContainer = document.createElement('div');
+        descriptionContainer.classList.add('justified');
+        container.appendChild(descriptionContainer);
+
+        const descriptionLabel = document.createElement('label');
+        descriptionLabel.setAttribute('for', 'label-upload-description');
+        descriptionLabel.textContent = 'Описание изображения:';
+        descriptionContainer.appendChild(descriptionLabel);
+
+        const descriptionInput = document.createElement('textarea');
+        descriptionInput.id = 'label-upload-description';
+        descriptionInput.classList.add('js-upload-description');
+        descriptionContainer.appendChild(descriptionInput);
+
+        this.preview.appendChild(container);
+    }
+
 
     //При отмене загрузик подчищаем превью и закрываем модалку
     uploadCancel(){
@@ -179,7 +218,7 @@ class ImageLoader{
 
             const src = this.getPreviewImg(e.currentTarget.files);
             this.showPreviewImg(src);
-
+            this.showPreviewInfo();
         });
 
 
