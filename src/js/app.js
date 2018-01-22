@@ -52,10 +52,12 @@ class Modal{
 class Server{
     constructor(){
         this.art = null;
+        this.baseurl = 'https://neto-api.herokuapp.com/yellowgallery/';
+        this.oldurl = './src/js/feed.json';
     }
     //Метод отдает всю ленту (массив объектов)
     getFeed(){
-        return fetch('./src/js/feed.json', {
+        return fetch(this.oldurl, {
             method: 'GET'
         });
     }
@@ -83,6 +85,21 @@ class Server{
                 id: id
             }
         }
+    }
+
+    //Код общения с сервером
+    uploadItem(formdata){
+        fetch(this.baseurl, {
+            method: 'POST',
+            // headers: {
+            //     'Content-Type': 'multipart/form-data'
+            // },
+            body: formdata
+        })
+            .then( res => res.json() )
+            .then( data => {
+                wrt(data);
+            } );
     }
 }
 const connection = new Server();
@@ -139,11 +156,22 @@ class ImageLoader{
         this.input = document.querySelector('.js-upload-input');
         this.preview = document.querySelector('.js-upload-image-preview');
 
+        this.form = document.querySelector('.js-upload-form');
+        this.imgToUpload = null;
+
         this.modalOpenBtn = document.querySelector('.js-upload-pic-btn');
         this.modalUploadCancelBtn = document.querySelector('.js-upload-cancel');
-        this.modalUploadAcceptBtn = document.querySelector('.js-upload-accept');
+        this.modalUploadSubmitBtn = document.querySelector('.js-upload-form-submit');
         this.modal = new Modal(document.querySelector('.js-upload-modal'));
         this.modal.init();
+    }
+
+    //Поля формы, которые генерируются кодом и не существуют в момент создания экземпляра ImageLoader
+    get uidInput(){
+        return this.form.querySelector('.js-upload-uid');
+    }
+    get descrInput(){
+        return this.form.querySelector('.js-upload-description');
     }
 
     //методы управления превьюшкой
@@ -170,6 +198,22 @@ class ImageLoader{
     showPreviewInfo(){
         const container = document.createElement('div');
         container.classList.add('upload-infoblock');
+
+
+        const uidContainer = document.createElement('div');
+        uidContainer.classList.add('justified');
+        container.appendChild(uidContainer);
+
+        const uidLabel = document.createElement('label');
+        uidLabel.setAttribute('for', 'label-upload-uid');
+        uidLabel.textContent = 'UID:';
+        uidContainer.appendChild(uidLabel);
+
+        const uidInput = document.createElement('input');
+        uidInput.id = 'label-upload-uid';
+        uidInput.classList.add('js-upload-uid');
+        uidContainer.appendChild(uidInput);
+
 
         const authorContainer = document.createElement('div');
         authorContainer.classList.add('justified');
@@ -211,10 +255,42 @@ class ImageLoader{
     }
 
 
+    upload(e){
+        if(!this.imgToUpload){
+            alert('Attach an image!');
+            return;
+        }
+        if(!this.uidInput.value){
+            alert('Enter the UID!');
+            return;
+        }
+
+        const formdata = new FormData(e);
+        formdata.append('uid', this.form.querySelector('.js-upload-uid').value);
+        formdata.append('description', this.form.querySelector('.js-upload-description').value);
+        formdata.append('image', this.imgToUpload);
+
+        connection.uploadItem(formdata);
+
+
+        for (var pair of formdata.entries()) {
+            console.log(pair[0]+ ', ' + pair[1]);
+        }
+    }
+
+
     init(){
         //Обработка загрузки картинки через инпут
         this.input.addEventListener('change', e => {
             e.preventDefault();
+
+            this.imgToUpload = e.target.files[0];
+
+            const filereader = new FileReader();
+            filereader.readAsDataURL(this.imgToUpload);
+            filereader.onload = e => {
+                this.imgToUpload = e.target.result;
+            };
 
             const src = this.getPreviewImg(e.currentTarget.files);
             this.showPreviewImg(src);
@@ -227,7 +303,9 @@ class ImageLoader{
             e.preventDefault();
 
             const src = this.getPreviewImg(e.dataTransfer.files);
+            this.imgToUpload = src;
             this.showPreviewImg(src);
+            this.showPreviewInfo();
 
             //Уберем стилизующий класс
             this.dropArea.classList.remove('upload-modal__drop-area_dragover');
@@ -260,6 +338,12 @@ class ImageLoader{
         this.modalUploadCancelBtn.addEventListener('click', (e) => {
             this.uploadCancel();
         });
+
+
+        //Обработка подтверждения загрузки
+        this.form.addEventListener('submit', e => {
+            this.upload(e);
+        })
     }
 }
 
