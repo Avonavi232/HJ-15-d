@@ -57,23 +57,16 @@ class Server{
     }
     //Метод отдает всю ленту (массив объектов)
     getFeed(){
-        return fetch(this.oldurl, {
+        return fetch(this.baseurl, {
             method: 'GET'
         });
     }
     //Метод отдает одну карточку по id (объект)
     getCard(id){
-        return fetch('./src/js/feed.json', {
+        return fetch(this.baseurl + id, {
             method: 'GET'
         })
-            .then( res => res.json() )
-            .then( data => {
-                return data.find((el, i) => {
-                    if (el.id === Number(id)){
-                        return el;
-                    }
-                });
-            } );
+            .then( res => res.json() );
     }
 
     updArtState(state, id){
@@ -275,11 +268,6 @@ class ImageLoader{
         formdata.append('image', this.imgToUpload);
 
         connection.uploadItem(formdata);
-
-
-        for (var pair of formdata.entries()) {
-            console.log(pair[0]+ ', ' + pair[1]);
-        }
     }
 
 
@@ -379,6 +367,12 @@ class Feed{
     }
 
     static createCard(card){
+        const likes = card.likes ? Object.keys(card.likes).length : 0;
+        const comments = card.comments ? Object.keys(card.comments).length : 0;
+        const seen = card.seen ? Object.keys(card.seen).length : 0;
+        const art = card.art ? Object.keys(card.art).length : 0;
+
+
         const container = document.createElement('div');
         container.classList.add('card-thumbnail');
         container.dataset.id = card.id;
@@ -395,17 +389,17 @@ class Feed{
         stats.appendChild(table);
 
         const row = document.createElement('tr');
-        row.appendChild(Feed.createStat('icon-heart', card.likes));
-        row.appendChild(Feed.createStat('icon-bubble', card.comments));
+        row.appendChild(Feed.createStat('icon-heart', likes));
+        row.appendChild(Feed.createStat('icon-bubble', comments));
         table.appendChild(row.cloneNode(true));
 
         row.textContent = '';
-        row.appendChild(Feed.createStat('icon-eye', card.seen));
-        row.appendChild(Feed.createStat('icon-pencil', card.art));
+        row.appendChild(Feed.createStat('icon-eye', seen));
+        row.appendChild(Feed.createStat('icon-pencil', art));
         table.appendChild(row);
 
         const img = document.createElement('img');
-        img.src = card.src;
+        img.src = card.url;
         container.appendChild(img);
 
         return container;
@@ -643,32 +637,35 @@ class ShowPicModal extends Modal{
                 //Картинка
                 this.pic.textContent = '';
                 const img = document.createElement('img');
-                img.src = cardData.src;
+                img.src = cardData.url;
                 this.pic.appendChild(img);
                 return cardData;
             })
             .then( cardData => {
                 //Статы
-                this.likes.textContent = cardData.likes;
-                this.comments.textContent = cardData.comments;
-                this.seen.textContent = cardData.seen;
-                this.art.textContent = cardData.art;
+                this.likes.textContent = cardData.likes ? Object.keys(cardData.likes).length : 0;
+                this.comments.textContent = cardData.comments ? Object.keys(cardData.comments).length : 0;
+                this.seen.textContent = cardData.seen ? Object.keys(cardData.seen).length : 0;
+                this.art.textContent = cardData.art ? Object.keys(cardData.art).length : 0;
                 return cardData;
             } )
             .then( cardData => {
                 //Остальное
-                this.author.textContent = cardData.author;
-                this.postDate.textContent = cardData.timestamp; //TODO: преобразовать timestamp в время
+                wrt(cardData);
+                this.author.textContent = cardData.uid;
+                this.postDate.textContent = new Date(cardData.timestamp).toLocaleString();
                 this.description.textContent = cardData.description;
 
-                for (const tag of cardData.tags){
-                    const span = document.createElement('span');
-                    span.textContent = '#' + tag;
-                    this.tags.appendChild(span);
-                }
+                //Теги
+                // for (const tag of cardData.tags){
+                //     const span = document.createElement('span');
+                //     span.textContent = '#' + tag;
+                //     this.tags.appendChild(span);
+                // }
 
-                for (const comment of cardData.commentsList){
-                    this.commentsList.appendChild(this.renderComment(comment.author, comment.body));
+                //Комменты
+                for (const commentKey in cardData.comments){
+                    this.commentsList.appendChild(this.renderComment(cardData.comments[commentKey].uid, cardData.comments[commentKey].message));
                 }
             });
 
