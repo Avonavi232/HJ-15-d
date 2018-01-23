@@ -98,7 +98,8 @@ class Server{
     likeItem(id){
         if (!id) return;
         wrt('liked');
-        fetch(this.baseurl + id + '/likes/' + Math.random(), {
+        const randInt = Math.floor(Math.random() * 10);
+        fetch(this.baseurl + id + '/likes/' + randInt, {
             method: 'PUT'
         })
             .then( res => res.json() )
@@ -109,7 +110,6 @@ class Server{
 
     commentItem(id, uid, message){
         if (!id) return;
-        wrt('commented');
         fetch(this.baseurl + id + '/comments', {
             method: 'POST',
             headers: {
@@ -124,6 +124,7 @@ class Server{
     }
 }
 const connection = new Server();
+
 
 /****************************************/
 
@@ -629,6 +630,7 @@ class ShowPicModal extends Modal{
         this.commentForm = modal.querySelector('.js-comment-form');
         this.commentUID = modal.querySelector('.js-comment-uid');
         this.commentMessage = modal.querySelector('.js-comment-message');
+        this.controlsInited = false;
     }
 
     renderComment(author, body){
@@ -692,7 +694,10 @@ class ShowPicModal extends Modal{
         this.id = card.dataset.id;
         this.updateModalData(card)
             .then( () => {
-                this.initControls();
+                if(!this.controlsInited){
+                    this.initControls();
+                    this.controlsInited = true;
+                }
             } )
             .then( ()=>{
                 this.open();
@@ -720,6 +725,7 @@ class ShowPicModal extends Modal{
 
 
     initControls(){
+        if(this.controlsInited) return;
         document.addEventListener('click', e => {
             for(const pathItem of e.path){
                 if (pathItem.classList.contains('js-image-like')){
