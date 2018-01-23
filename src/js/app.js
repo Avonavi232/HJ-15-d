@@ -264,6 +264,10 @@ class ImageLoader{
             alert('Enter the UID!');
             return;
         }
+        if ( this.imgToUpload.type.indexOf('png') === -1 ) {
+            alert('You can only upload an PNG image');
+            return;
+        }
 
         const formdata = new FormData(e);
         formdata.append('uid', this.form.querySelector('.js-upload-uid').value);
@@ -286,12 +290,6 @@ class ImageLoader{
 
             this.imgToUpload = e.target.files[0];
 
-            const filereader = new FileReader();
-            filereader.readAsDataURL(this.imgToUpload);
-            filereader.onload = e => {
-                this.imgToUpload = e.target.result;
-            };
-
             const src = this.getPreviewImg(e.currentTarget.files);
             this.showPreviewImg(src);
             this.showPreviewInfo();
@@ -303,7 +301,8 @@ class ImageLoader{
             e.preventDefault();
 
             const src = this.getPreviewImg(e.dataTransfer.files);
-            this.imgToUpload = src;
+            this.imgToUpload = e.dataTransfer.files[0];
+
             this.showPreviewImg(src);
             this.showPreviewInfo();
 
