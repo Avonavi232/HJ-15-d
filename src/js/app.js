@@ -94,8 +94,37 @@ class Server{
                 wrt(data);
             } );
     }
+
+    likeItem(id){
+        if (!id) return;
+        wrt('liked');
+        fetch(this.baseurl + id + '/likes/' + Math.random(), {
+            method: 'PUT'
+        })
+            .then( res => res.json() )
+            .then( data => {
+                wrt(data);
+            } );
+    }
+
+    commentItem(id, uid, message){
+        if (!id) return;
+        wrt('commented');
+        fetch(this.baseurl + id + '/comments', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: 'uid=' + encodeURIComponent(uid) + '&message=' + encodeURIComponent(message)
+        })
+            .then( res => res.json() )
+            .then( data => {
+                wrt(data);
+            } );
+    }
 }
 const connection = new Server();
+
 /****************************************/
 
 
@@ -597,6 +626,9 @@ class ShowPicModal extends Modal{
         this.commentsList = modal.querySelector('.image-comments');
         this.description = modal.querySelector('.js-image-description');
 
+        this.commentForm = modal.querySelector('.js-comment-form');
+        this.commentUID = modal.querySelector('.js-comment-uid');
+        this.commentMessage = modal.querySelector('.js-comment-message');
     }
 
     renderComment(author, body){
@@ -636,7 +668,6 @@ class ShowPicModal extends Modal{
             } )
             .then( cardData => {
                 //Остальное
-                wrt(cardData);
                 this.author.textContent = cardData.uid;
                 this.postDate.textContent = new Date(cardData.timestamp).toLocaleString();
                 this.description.textContent = cardData.description;
@@ -660,6 +691,9 @@ class ShowPicModal extends Modal{
     showPic(card){
         this.id = card.dataset.id;
         this.updateModalData(card)
+            .then( () => {
+                this.initControls();
+            } )
             .then( ()=>{
                 this.open();
             } );
@@ -683,6 +717,28 @@ class ShowPicModal extends Modal{
         this.description.textContent = '';
         super.close();
     }
+
+
+    initControls(){
+        document.addEventListener('click', e => {
+            for(const pathItem of e.path){
+                if (pathItem.classList.contains('js-image-like')){
+                    break;
+                } else if ( pathItem.tagName === 'BODY' ) return;
+            }
+            connection.likeItem(this.id);
+        });
+
+        this.commentForm.addEventListener('submit', e => {
+            e.preventDefault();
+            if (!this.commentUID || !this.commentMessage){
+                alert('Не все поля заполнены');
+                return;
+            }
+            connection.commentItem(this.id, this.commentUID.value, this.commentMessage.value);
+        })
+    }
+
 
     init(){
         document.querySelector('.js-art-on').addEventListener('click', e => {
