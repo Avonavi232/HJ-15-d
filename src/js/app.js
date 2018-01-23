@@ -199,28 +199,13 @@ class ImageLoader{
 
         const uidLabel = document.createElement('label');
         uidLabel.setAttribute('for', 'label-upload-uid');
-        uidLabel.textContent = 'UID:';
+        uidLabel.textContent = 'Опубликовать от имени автора:';
         uidContainer.appendChild(uidLabel);
 
         const uidInput = document.createElement('input');
         uidInput.id = 'label-upload-uid';
         uidInput.classList.add('js-upload-uid');
         uidContainer.appendChild(uidInput);
-
-
-        const authorContainer = document.createElement('div');
-        authorContainer.classList.add('justified');
-        container.appendChild(authorContainer);
-
-        const authorLabel = document.createElement('label');
-        authorLabel.setAttribute('for', 'label-upload-author');
-        authorLabel.textContent = 'Опубликовать от имени автора:';
-        authorContainer.appendChild(authorLabel);
-
-        const authorInput = document.createElement('input');
-        authorInput.id = 'label-upload-author';
-        authorInput.classList.add('js-upload-author');
-        authorContainer.appendChild(authorInput);
 
 
         const descriptionContainer = document.createElement('div');
