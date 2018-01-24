@@ -97,34 +97,35 @@ class Server{
 
     likeItem(id){
         if (!id) return;
-        wrt('liked');
         const randInt = Math.floor(Math.random() * 10);
-        fetch(this.baseurl + id + '/likes/' + randInt, {
+        return fetch(this.baseurl + id + '/likes/' + randInt, {
             method: 'PUT'
         })
-            .then( res => res.json() )
-            .then( data => {
-                wrt(data);
-            } );
+            .then( res => res.json() );
     }
 
     commentItem(id, uid, message){
         if (!id) return;
-        fetch(this.baseurl + id + '/comments', {
+        return fetch(this.baseurl + id + '/comments', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded'
             },
             body: 'uid=' + encodeURIComponent(uid) + '&message=' + encodeURIComponent(message)
         })
-            .then( res => res.json() )
-            .then( data => {
-                wrt(data);
-            } );
+            .then( res => res.json() );
+    }
+
+    seeItem(id){
+        if (!id) return;
+        const randInt = Math.floor(Math.random() * 200);
+        return fetch(this.baseurl + id + '/seen/' + randInt, {
+            method: 'PUT',
+        })
+            .then( res => res.json() );
     }
 }
 const connection = new Server();
-
 
 /****************************************/
 
@@ -631,6 +632,9 @@ class ShowPicModal extends Modal{
         this.commentUID = modal.querySelector('.js-comment-uid');
         this.commentMessage = modal.querySelector('.js-comment-message');
         this.controlsInited = false;
+
+        this.id = null; //будет хранить id картинки, когда модалка открыта.
+        this.controlsInited = false; //хранит состояние initControls
     }
 
     renderComment(author, body){
@@ -650,9 +654,26 @@ class ShowPicModal extends Modal{
         return container;
     }
 
+    updateModalStatsComments(id){
+        return connection.getCard(id)
+            .then( cardData => {
+                //Статы
+                this.likes.textContent = cardData.likes ? Object.keys(cardData.likes).length : 0;
+                this.comments.textContent = cardData.comments ? Object.keys(cardData.comments).length : 0;
+                this.seen.textContent = cardData.seen ? Object.keys(cardData.seen).length : 0;
+                this.art.textContent = cardData.art ? Object.keys(cardData.art).length : 0;
+
+                this.commentsList.textContent = '';
+                for (const commentKey in cardData.comments){
+                    this.commentsList.appendChild(this.renderComment(cardData.comments[commentKey].uid, cardData.comments[commentKey].message));
+                }
+            } );
+    }
+
     updateModalData(card){
         return connection.getCard(card.dataset.id)
             .then(cardData => {
+                wrt(cardData);
                 //Картинка
                 this.pic.textContent = '';
                 const img = document.createElement('img');
@@ -674,24 +695,16 @@ class ShowPicModal extends Modal{
                 this.postDate.textContent = new Date(cardData.timestamp).toLocaleString();
                 this.description.textContent = cardData.description;
 
-                //Теги
-                // for (const tag of cardData.tags){
-                //     const span = document.createElement('span');
-                //     span.textContent = '#' + tag;
-                //     this.tags.appendChild(span);
-                // }
-
                 //Комменты
                 for (const commentKey in cardData.comments){
                     this.commentsList.appendChild(this.renderComment(cardData.comments[commentKey].uid, cardData.comments[commentKey].message));
                 }
             });
-
-
     }
 
     showPic(card){
         this.id = card.dataset.id;
+        connection.seeItem(this.id);
         this.updateModalData(card)
             .then( () => {
                 if(!this.controlsInited){
@@ -720,6 +733,7 @@ class ShowPicModal extends Modal{
         this.tags.textContent = '';
         this.commentsList.textContent = '';
         this.description.textContent = '';
+        this.controlsInited = false;
         super.close();
     }
 
@@ -732,7 +746,10 @@ class ShowPicModal extends Modal{
                     break;
                 } else if ( pathItem.tagName === 'BODY' ) return;
             }
-            connection.likeItem(this.id);
+            connection.likeItem(this.id)
+                .then( () => {
+                    this.updateModalStatsComments(this.id);
+                } );
         });
 
         this.commentForm.addEventListener('submit', e => {
@@ -741,7 +758,10 @@ class ShowPicModal extends Modal{
                 alert('Не все поля заполнены');
                 return;
             }
-            connection.commentItem(this.id, this.commentUID.value, this.commentMessage.value);
+            connection.commentItem(this.id, this.commentUID.value, this.commentMessage.value)
+                .then( () => {
+                    this.updateModalStatsComments(this.id);
+                } );
         })
     }
 
