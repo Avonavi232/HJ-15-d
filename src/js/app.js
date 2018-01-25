@@ -515,7 +515,6 @@ class Art {
     repaint() {
         //Функция перерисовки всей канвы
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-        this.ctx.drawImage(this.img, 0, 0, this.canvas.width, this.canvas.height);
 
         for(const curve of this.curves){
             this.circle(curve[0]);
@@ -588,16 +587,12 @@ class Art {
     }
 
     init(){
-        this.imgContainer.textContent = '';
-        this.ctx.drawImage(this.img, 0, 0, this.canvas.width, this.canvas.height);
         this.imgContainer.appendChild(this.canvas);
 
         this.shiftPressedControl(); //запускаем слежение за shift
         this.tick(); //запускаем тик
 
         window.addEventListener('resize', () => {
-            // this.canvas.height = window.innerHeight;
-            // this.canvas.width = window.innerWidth;
             this.ctx.lineJoin = 'round';
             this.ctx.lineCap = 'round';
             this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
@@ -640,17 +635,12 @@ class Art {
 
 
         window.editor.addEventListener('update', (canvas) => {
-            wrt(canvas);
-            // const img = canvas;
             canvas.toBlob(function (blob) {
-                // connection.ws.send(blob);
-                wrt(blob);
+                if(connection.ws && connection.ws.readyState === 1){
+                    connection.ws.send(blob);
+                }
             });
         });
-
-        // this.ws.addEventListener('message', function (e) {
-        //     wrt(`Package received: ${e.data}`);
-        // });
     }
 }
 /****************************************/
@@ -817,6 +807,7 @@ class ShowPicModal extends Modal{
             const art = new Art(img, artTools);
             art.init();
             connection.updArtState(true, this.id);
+            connection.socketInit();
         });
         document.querySelector('.js-art-off').addEventListener('click', e => {
             this.pic.textContent = '';
