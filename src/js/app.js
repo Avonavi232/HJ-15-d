@@ -374,6 +374,7 @@ class ImageLoader{
 
         //Обработка подтверждения загрузки
         this.form.addEventListener('submit', e => {
+            e.preventDefault();
             this.upload(e);
         })
     }
@@ -842,9 +843,6 @@ document.querySelector('.js-feed').addEventListener('click', (e) => {
 });
 
 /****************************************/
-
-
-
 
 
 
