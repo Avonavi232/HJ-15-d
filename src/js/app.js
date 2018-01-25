@@ -4,6 +4,23 @@ function wrt(d) {
     console.log(d);
 }
 
+window.editor = {
+    events: {},
+    addEventListener(event, callback) {
+        if (!this.events[event]) {
+            this.events[event] = [];
+        }
+        this.events[event].push(callback);
+    },
+    emit(event, data) {
+        if (!this.events[event]) {
+            return;
+        }
+        this.events[event]
+            .forEach(callback => callback.call(this, data));
+    }
+}
+
 
 /****************************************/
 /*************Функционал модалки*********/
@@ -123,6 +140,18 @@ class Server{
             method: 'PUT',
         })
             .then( res => res.json() );
+    }
+
+    socketInit(){
+        this.ws = new WebSocket('wss://neto-api.herokuapp.com/draw');
+
+        this.ws.addEventListener('open', function () {
+            wrt('Connection opened');
+        });
+
+        this.ws.addEventListener('close', function () {
+            wrt('Connection closed');
+        });
     }
 }
 const connection = new Server();
@@ -584,6 +613,7 @@ class Art {
 
         document.addEventListener('mouseup', () => {
             this.mouseHolded = 0;
+            window.editor.emit('update', this.canvas);
         });
 
         this.canvas.addEventListener('mousemove', e => {
@@ -605,7 +635,21 @@ class Art {
         });
         this.brushWidthInput.addEventListener('change', e => {
             this.brushWidth = e.target.value;
-        })
+        });
+
+
+        window.editor.addEventListener('update', (canvas) => {
+            wrt(canvas);
+            // const img = canvas;
+            canvas.toBlob(function (blob) {
+                // connection.ws.send(blob);
+                wrt(blob);
+            });
+        });
+
+        // this.ws.addEventListener('message', function (e) {
+        //     wrt(`Package received: ${e.data}`);
+        // });
     }
 }
 /****************************************/
@@ -673,7 +717,6 @@ class ShowPicModal extends Modal{
     updateModalData(card){
         return connection.getCard(card.dataset.id)
             .then(cardData => {
-                wrt(cardData);
                 //Картинка
                 this.pic.textContent = '';
                 const img = document.createElement('img');
