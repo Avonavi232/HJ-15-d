@@ -19,6 +19,30 @@ window.editor = {
         this.events[event]
             .forEach(callback => callback.call(this, data));
     }
+};
+
+
+function throttle(fn, threshhold, scope) {
+    threshhold || (threshhold = 250);
+    var last,
+        deferTimer;
+    return function () {
+        var context = scope || this;
+
+        var now = +new Date,
+            args = arguments;
+        if (last && now < last + threshhold) {
+            // hold on to it
+            clearTimeout(deferTimer);
+            deferTimer = setTimeout(function () {
+                last = now;
+                fn.apply(context, args);
+            }, threshhold);
+        } else {
+            last = now;
+            fn.apply(context, args);
+        }
+    };
 }
 
 
@@ -71,13 +95,18 @@ class Server{
         this.art = null;
         this.baseurl = 'https://neto-api.herokuapp.com/yellowgallery/';
         this.oldurl = './src/js/feed.json';
+        this.wssBaseUrl = 'wss://neto-api.herokuapp.com/yellowgallery/';
     }
+
+
     //Метод отдает всю ленту (массив объектов)
     getFeed(){
         return fetch(this.baseurl, {
             method: 'GET'
         });
     }
+
+
     //Метод отдает одну карточку по id (объект)
     getCard(id){
         return fetch(this.baseurl + id, {
@@ -85,6 +114,7 @@ class Server{
         })
             .then( res => res.json() );
     }
+
 
     updArtState(state, id){
         if (state === null){
@@ -97,13 +127,11 @@ class Server{
         }
     }
 
+
     //Код общения с сервером
     uploadItem(formdata){
         fetch(this.baseurl, {
             method: 'POST',
-            // headers: {
-            //     'Content-Type': 'multipart/form-data'
-            // },
             body: formdata
         })
             .then( res => res.json() )
@@ -111,6 +139,7 @@ class Server{
                 wrt(data);
             } );
     }
+
 
     likeItem(id){
         if (!id) return;
@@ -120,6 +149,7 @@ class Server{
         })
             .then( res => res.json() );
     }
+
 
     commentItem(id, uid, message){
         if (!id) return;
@@ -133,6 +163,7 @@ class Server{
             .then( res => res.json() );
     }
 
+
     seeItem(id){
         if (!id) return;
         const randInt = Math.floor(Math.random() * 200);
@@ -142,16 +173,33 @@ class Server{
             .then( res => res.json() );
     }
 
-    socketInit(){
-        this.ws = new WebSocket('wss://neto-api.herokuapp.com/draw');
 
-        this.ws.addEventListener('open', function () {
-            wrt('Connection opened');
-        });
+    artInit(id){
+        const socket = new WebSocket(this.wssBaseUrl + id);
 
-        this.ws.addEventListener('close', function () {
-            wrt('Connection closed');
-        });
+        socket.onopen = function() {
+            wrt("Соединение установлено.");
+        };
+
+        socket.onclose = function(event) {
+            if (event.wasClean) {
+                wrt('Соединение закрыто чисто');
+            } else {
+                wrt('Обрыв соединения'); // например, "убит" процесс сервера
+            }
+            wrt('Код: ' + event.code + ' причина: ' + event.reason);
+        };
+
+        socket.onmessage = function(event) {
+            wrt("Получены данные ");
+            wrt(JSON.parse(event.data));
+        };
+
+        socket.onerror = function(error) {
+            wrt("Ошибка " + error.message);
+        };
+
+        return socket;
     }
 }
 const connection = new Server();
@@ -489,9 +537,10 @@ Feed.updFeed();
 /***********Творческий режим*************/
 /****************************************/
 class Art {
-    constructor(imgContainer, controls){
+    constructor(imgContainer, controls, id){
         this.imgContainer = imgContainer;
         this.img = imgContainer.querySelector('img');
+        this.id = id;
 
         this.canvas = document.createElement('canvas');
         this.canvas.height = this.img.clientHeight;
@@ -510,6 +559,9 @@ class Art {
         this.needsRepaint = false; //требуется ли перерисовка
         this.curves = []; //массив зафиксированных при mousemove кривых
         this.mouseHolded = 0; //состояние левой кн. мыши (нажато/не нажато)
+
+        this.socket = connection.artInit(this.id);
+        this.socket.addEventListener('open', ()=>{this.init()});
     }
 
     repaint() {
@@ -588,7 +640,6 @@ class Art {
 
     init(){
         this.imgContainer.appendChild(this.canvas);
-
         this.shiftPressedControl(); //запускаем слежение за shift
         this.tick(); //запускаем тик
 
@@ -622,7 +673,6 @@ class Art {
         this.canvas.addEventListener('dblclick', (e) => {
             e.preventDefault();
             this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-            this.ctx.drawImage(this.img, 0, 0, this.canvas.width, this.canvas.height);
             this.curves = [];
         });
 
@@ -633,14 +683,32 @@ class Art {
             this.brushWidth = e.target.value;
         });
 
-
-        window.editor.addEventListener('update', (canvas) => {
-            canvas.toBlob(function (blob) {
-                if(connection.ws && connection.ws.readyState === 1){
-                    connection.ws.send(blob);
+        window.editor.addEventListener('update', throttle((canvas) => {
+            canvas.toBlob( blob => {
+                if(this.socket && this.socket.readyState === 1){
+                    this.socket.send(blob);
                 }
             });
+        }, 3000, this));
+
+        this.socket.addEventListener('message', e => {
+            const responce = JSON.parse(e.data);
+            if (responce.event !== 'mask')
+                return;
+
+            const img = new Image;
+            img.src = responce.url;
+            img.classList.add('js-mask');
+
+            img.onload = () => {
+                const oldMask = this.imgContainer.querySelector('.js-mask');
+                if (oldMask)
+                    oldMask.remove();
+                this.imgContainer.insertBefore(img, this.canvas);
+            }
         });
+
+
     }
 }
 /****************************************/
@@ -804,10 +872,9 @@ class ShowPicModal extends Modal{
         document.querySelector('.js-art-on').addEventListener('click', e => {
             const img = this.pic;
             const artTools = this.modal.querySelector('.image-art');
-            const art = new Art(img, artTools);
-            art.init();
-            connection.updArtState(true, this.id);
-            connection.socketInit();
+            const art = new Art(img, artTools, this.id);
+            // connection.updArtState(true, this.id);
+            // connection.socketInit();
         });
         document.querySelector('.js-art-off').addEventListener('click', e => {
             this.pic.textContent = '';
