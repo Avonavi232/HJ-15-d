@@ -743,6 +743,9 @@ class Art {
                     img.src = urlCreator.createObjectURL(data);
                     img.crossOrigin = "Anonymous";
                     img.classList.add('js-mask');
+                    img.style.width = this.canvas.width + 'px';
+                    img.style.height = this.canvas.height + 'px';
+
                     img.onload = () => {
                         const oldMask = this.imgContainer.querySelector('.js-mask');
                         if (oldMask)
