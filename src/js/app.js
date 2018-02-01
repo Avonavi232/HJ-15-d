@@ -191,8 +191,8 @@ class Server{
         };
 
         socket.onmessage = function(event) {
-            wrt("Получены данные ");
-            wrt(JSON.parse(event.data));
+            //wrt("Получены данные ");
+            //wrt(JSON.parse(event.data));
         };
 
         socket.onerror = function(error) {
@@ -201,8 +201,42 @@ class Server{
 
         return socket;
     }
+
+    getMask(id){
+        if (!id) return;
+
+        return fetch(this.baseurl + id + '/mask/' + Date.now(), {
+            method: 'GET'
+        })
+            .then( res => res.blob() );
+    }
+
+    sendCanvas(canvas, id){
+        return new Promise((resolve, reject) => {
+            canvas.toBlob(blob => {
+                const formdata = new FormData();
+                formdata.append('image', blob);
+                fetch(this.baseurl + id + '/mask ', {
+                    method: 'PUT',
+                    body: formdata
+                })
+                    .then( res => {
+                        resolve(res.json());
+                    });
+            });
+        })
+    }
 }
 const connection = new Server();
+
+// connection.getMask('18ccd020-ff28-11e7-9f10-19bd8572c366')
+//     .then( data => {
+//         wrt(URL.createObjectURL(data));
+//         const img = new Image();
+//         img.src = URL.createObjectURL(data);
+//         img.crossOrigin = "Anonymous";
+//         document.querySelector('.app-header').appendChild(img);
+//     } );
 
 /****************************************/
 
@@ -684,31 +718,39 @@ class Art {
         });
 
         window.editor.addEventListener('update', throttle((canvas) => {
-            canvas.toBlob( blob => {
-                if(this.socket && this.socket.readyState === 1){
-                    this.socket.send(blob);
-                }
-            });
+            const mask = this.imgContainer.querySelector('.js-mask');
+            if (mask) {
+                const tmpCanvas = document.createElement('canvas');
+                tmpCanvas.width = this.canvas.width;
+                tmpCanvas.height = this.canvas.height;
+                const ctx = tmpCanvas.getContext('2d');
+                ctx.drawImage(mask, 0, 0);
+                ctx.drawImage(canvas, 0, 0);
+
+                connection.sendCanvas(tmpCanvas, this.id)
+                    .then( data => wrt(data) );
+            } else {
+                connection.sendCanvas(canvas, this.id)
+                    .then( data => wrt(data) );
+            }
         }, 3000, this));
 
-        this.socket.addEventListener('message', e => {
-            const responce = JSON.parse(e.data);
-            if (responce.event !== 'mask')
-                return;
-
-            const img = new Image;
-            img.src = responce.url;
-            img.classList.add('js-mask');
-
-            img.onload = () => {
-                const oldMask = this.imgContainer.querySelector('.js-mask');
-                if (oldMask)
-                    oldMask.remove();
-                this.imgContainer.insertBefore(img, this.canvas);
-            }
-        });
-
-
+        setInterval(e => {
+            connection.getMask(this.id)
+                .then( data => {
+                    const img = new Image();
+                    const urlCreator = window.URL || window.webkitURL;
+                    img.src = urlCreator.createObjectURL(data);
+                    img.crossOrigin = "Anonymous";
+                    img.classList.add('js-mask');
+                    img.onload = () => {
+                        const oldMask = this.imgContainer.querySelector('.js-mask');
+                        if (oldMask)
+                            oldMask.remove();
+                        this.imgContainer.insertBefore(img, this.canvas);
+                    }
+                } );
+        }, 3000);
     }
 }
 /****************************************/
