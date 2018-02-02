@@ -696,10 +696,31 @@ class Art {
         return 1;
     }
 
+    setMask(){
+        return connection.getMask(this.id)
+            .then( data => {
+                const img = new Image();
+                const urlCreator = window.URL || window.webkitURL;
+                img.src = urlCreator.createObjectURL(data);
+                img.crossOrigin = "Anonymous";
+                img.classList.add('js-mask');
+                img.style.width = this.canvas.width + 'px';
+                img.style.height = this.canvas.height + 'px';
+
+                img.onload = () => {
+                    const oldMask = this.imgContainer.querySelector('.js-mask');
+                    if (oldMask)
+                        oldMask.remove();
+                    this.imgContainer.insertBefore(img, this.canvas);
+                    preloader.close();
+                }
+            } );
+    }
+
     init(){
         this.imgContainer.appendChild(this.canvas);
         this.shiftPressedControl(); //запускаем слежение за shift
-        this.tick(); //запускаем тик
+        preloader.open();
 
         window.addEventListener('resize', () => {
             this.ctx.lineJoin = 'round';
@@ -759,25 +780,14 @@ class Art {
             }
         }, 3000, this));
 
-        setInterval(e => {
-            connection.getMask(this.id)
-                .then( data => {
-                    const img = new Image();
-                    const urlCreator = window.URL || window.webkitURL;
-                    img.src = urlCreator.createObjectURL(data);
-                    img.crossOrigin = "Anonymous";
-                    img.classList.add('js-mask');
-                    img.style.width = this.canvas.width + 'px';
-                    img.style.height = this.canvas.height + 'px';
+        this.setMask()
+            .then ( () => {
+                preloader.close();
+            } );
 
-                    img.onload = () => {
-                        const oldMask = this.imgContainer.querySelector('.js-mask');
-                        if (oldMask)
-                            oldMask.remove();
-                        this.imgContainer.insertBefore(img, this.canvas);
-                    }
-                } );
-        }, 3000);
+        setInterval(this.setMask.bind(this), 3000);
+
+        this.tick();
     }
 }
 /****************************************/
