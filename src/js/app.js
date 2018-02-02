@@ -97,7 +97,7 @@ class Preloader extends Modal{
         this.modal.classList.add('preloader', 'modal');
 
         const img = new Image();
-        img.src = 'https://github.com/Avonavi232/HJ-15-d/blob/master/res/preloader.gif';
+        img.src = 'https://raw.githubusercontent.com/Avonavi232/HJ-15-d/master/res/preloader.gif';
         this.modal.appendChild(img);
         document.querySelector('body').appendChild(this.modal);
         this.init();
