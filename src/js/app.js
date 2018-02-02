@@ -73,6 +73,7 @@ class Modal{
         this.modal.classList.remove('fadeIn');
         this.modal.classList.add('fadeOut');
     }
+
     init(){
         this.modal.querySelector('.js-modal-close').addEventListener('click', () => {this.close();});
         this.modal.addEventListener("webkitAnimationEnd", () => {this.closeAnimEnd();});
@@ -153,14 +154,11 @@ class Server{
 
     //Код общения с сервером
     uploadItem(formdata){
-        fetch(this.baseurl, {
+        return fetch(this.baseurl, {
             method: 'POST',
             body: formdata
         })
-            .then( res => res.json() )
-            .then( data => {
-                wrt(data);
-            } );
+            .then( res => res.json() );
     }
 
 
@@ -352,6 +350,7 @@ class ImageLoader{
         this.preview.textContent = '';
     }
 
+
     showPreviewInfo(){
         const container = document.createElement('div');
         container.classList.add('upload-infoblock');
@@ -397,7 +396,7 @@ class ImageLoader{
     }
 
 
-    upload(e){
+    upload(){
         if(!this.imgToUpload){
             alert('Attach an image!');
             return;
@@ -411,12 +410,19 @@ class ImageLoader{
             return;
         }
 
-        const formdata = new FormData(e);
+        preloader.open();
+
+        const formdata = new FormData();
         formdata.append('uid', this.form.querySelector('.js-upload-uid').value);
         formdata.append('description', this.form.querySelector('.js-upload-description').value);
         formdata.append('image', this.imgToUpload);
 
-        connection.uploadItem(formdata);
+        connection.uploadItem(formdata)
+            .then( data => {
+                preloader.close();
+                this.modal.close();
+                this.removePreviewImg();
+            });
     }
 
 
@@ -464,23 +470,29 @@ class ImageLoader{
         });
 
 
+        //Делегируем клик по дропзоне инпуту
+        this.dropArea.addEventListener('click', ()=>{
+            this.input.click();
+        });
+
+
         //Открываем модалку-загрузчик по клику на соотв.кнопке
-        this.modalOpenBtn.addEventListener('click', (e) => {
+        this.modalOpenBtn.addEventListener('click', () => {
             this.modal.open();
         });
 
 
         //Обработка отмены загрузки
-        this.modalUploadCancelBtn.addEventListener('click', (e) => {
+        this.modalUploadCancelBtn.addEventListener('click', () => {
             this.uploadCancel();
         });
 
 
         //Обработка подтверждения загрузки
-        this.form.addEventListener('submit', e => {
+        this.form.addEventListener('submit', (e) => {
             e.preventDefault();
-            this.upload(e);
-        })
+            this.upload();
+        });
     }
 }
 

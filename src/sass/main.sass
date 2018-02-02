@@ -127,6 +127,7 @@ $dark: #7b7b7b
 /*************BUTTONS***************/
 /***********************************/
 .button
+
   border: none
   outline: none
   background-color: transparent
@@ -135,6 +136,9 @@ $dark: #7b7b7b
   border-radius: 10px
   transition: all .3s
   font-size: 1.6rem
+  &:hover
+    cursor: pointer
+    user-select: none
   &#{&}_primary
     color: $accent
     border: 2px solid $accent
@@ -259,13 +263,16 @@ body.modal-opened
     font: 2.2rem 'Roboto', sans-serif
     color: #dcdcdc
     border: 4px dashed #dcdcdc
-    &#{&}_dragover
+    &#{&}_dragover, &:hover
       border-color: $accent
       p
         color: $accent
         animation-name: dragOverP
         animation-duration: 1s
         animation-fill-mode: forwards
+    &:hover
+      cursor: pointer
+
 
     @media (min-width: 992px)
       width: 415px
