@@ -503,7 +503,7 @@ class Feed{
         const td = document.createElement('td');
 
         const p = document.createElement('p');
-        p.classList.add('stat', 'js-stat-likes');
+        p.classList.add('stat');
         td.appendChild(p);
 
         const icon = document.createElement('span');
@@ -943,8 +943,9 @@ class ShowPicModal extends Modal{
             connection.commentItem(this.id, this.commentUID.value, this.commentMessage.value)
                 .then( () => {
                     this.updateModalStatsComments(this.id);
+                    this.commentMessage.value = '';
                 } );
-        })
+        });
     }
 
 
