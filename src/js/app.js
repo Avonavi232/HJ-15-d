@@ -211,8 +211,8 @@ class Server{
         };
 
         socket.onmessage = function(event) {
-            //wrt("Получены данные ");
-            //wrt(JSON.parse(event.data));
+            wrt("Получены данные ");
+            wrt(JSON.parse(event.data));
         };
 
         socket.onerror = function(error) {
@@ -225,10 +225,19 @@ class Server{
     getMask(id){
         if (!id) return;
 
-        return fetch(this.baseurl + id + '/mask/' + Date.now(), {
-            method: 'GET'
+        return new Promise((resolve, reject) => {
+            fetch('https://neto-api.herokuapp.com/yellowgallery/' + id + '/mask/' + Date.now(), {
+                method: 'GET'
+            })
+                .then( res => {
+                    if (200 <= res.status && res.status < 300) {
+                        resolve(res.blob());
+                    } else {
+                        wrt(res.status);
+                        reject();
+                    }
+                });
         })
-            .then( res => res.blob() );
     }
 
     sendCanvas(canvas, id){
@@ -246,17 +255,18 @@ class Server{
             });
         })
     }
+
+    sendCanvasSocket(canvas, socket){
+        canvas.toBlob(blob => {
+            wrt(blob);
+            socket.send(blob);
+        });
+    }
+
 }
 const connection = new Server();
 
-// connection.getMask('18ccd020-ff28-11e7-9f10-19bd8572c366')
-//     .then( data => {
-//         wrt(URL.createObjectURL(data));
-//         const img = new Image();
-//         img.src = URL.createObjectURL(data);
-//         img.crossOrigin = "Anonymous";
-//         document.querySelector('.app-header').appendChild(img);
-//     } );
+
 
 /****************************************/
 
@@ -611,6 +621,7 @@ class Art {
         this.imgContainer = imgContainer;
         this.img = imgContainer.querySelector('img');
         this.id = id;
+        this.active = true;
 
         this.canvas = document.createElement('canvas');
         this.canvas.height = this.img.clientHeight;
@@ -658,13 +669,9 @@ class Art {
 
     smoothCurveBetween (p1, p2) {
         //Функция добавляет точку для квадратичной кривой Bezier
-        //p1 - end point
-        //cp - control point
-
         const cpx = ( p1[0] + p2[0] ) / 2;
         const cpy = ( p1[1] + p2[1] ) / 2;
-        this.ctx.quadraticCurveTo(p1[0], p1[1], cpx, cpy); //почему такая последовательность? в спецификации не такая написана.
-
+        this.ctx.quadraticCurveTo(p1[0], p1[1], cpx, cpy);
     }
 
     smoothCurve(points) {
@@ -710,25 +717,26 @@ class Art {
     }
 
     setMask(){
-        return connection.getMask(this.id)
-            .then( data => {
-                const img = new Image();
-                const urlCreator = window.URL || window.webkitURL;
-                img.src = urlCreator.createObjectURL(data);
-                img.crossOrigin = "Anonymous";
-                img.classList.add('js-mask');
-                img.style.width = this.canvas.width + 'px';
-                img.style.height = this.canvas.height + 'px';
+      return connection.getMask(this.id)
+        .then( data => {
+            const img = new Image();
+            const urlCreator = window.URL || window.webkitURL;
+            img.src = urlCreator.createObjectURL(data);
+            img.crossOrigin = "Anonymous";
+            img.classList.add('js-mask');
+            img.style.width = this.canvas.width + 'px';
+            img.style.height = this.canvas.height + 'px';
 
-                img.onload = () => {
-                    const oldMask = this.imgContainer.querySelector('.js-mask');
-                    if (oldMask)
-                        oldMask.remove();
+            img.onload = () => {
+                const oldMask = this.imgContainer.querySelector('.js-mask');
+                if (oldMask)
+                    oldMask.remove();
+                if(this.active)
                     this.imgContainer.insertBefore(img, this.canvas);
-                    preloader.close();
-                }
-            } );
+            }
+        } );
     }
+
 
     stopArt(){
         clearInterval(this.maskInterval);
@@ -789,16 +797,25 @@ class Art {
                 ctx.drawImage(mask, 0, 0);
                 ctx.drawImage(canvas, 0, 0);
 
+                // connection.sendCanvasSocket(tmpCanvas, socket);
                 connection.sendCanvas(tmpCanvas, this.id);
             } else {
+                // connection.sendCanvasSocket(canvas, socket);
                 connection.sendCanvas(canvas, this.id);
             }
         }, 3000, this));
 
+
+
         this.setMask()
             .then ( () => {
                 preloader.close();
-            } );
+                wrt('NOT catched');
+            } )
+            .catch( () => {
+                wrt('catched');
+                preloader.close();
+            });
 
         this.maskInterval = setInterval(this.setMask.bind(this), 3000);
 
@@ -1000,6 +1017,7 @@ class ShowPicModal extends Modal{
             this.pic.textContent = '';
             this.pic.appendChild(this.img);
             this.artObject.stopArt();
+            this.artObject.active = false;
         });
         super.init();
     }
