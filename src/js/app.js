@@ -618,8 +618,9 @@ class Art {
         this.curves = []; //массив зафиксированных при mousemove кривых
         this.mouseHolded = 0; //состояние левой кн. мыши (нажато/не нажато)
 
-        this.socket = connection.artInit(this.id);
-        this.socket.addEventListener('open', ()=>{this.init()});
+        // this.socket = connection.artInit(this.id);
+        // this.socket.addEventListener('open', ()=>{this.init()});
+        this.init();
     }
 
     repaint() {
@@ -717,6 +718,10 @@ class Art {
             } );
     }
 
+    stopArt(){
+        clearInterval(this.maskInterval);
+    }
+
     init(){
         this.imgContainer.appendChild(this.canvas);
         this.shiftPressedControl(); //запускаем слежение за shift
@@ -772,11 +777,9 @@ class Art {
                 ctx.drawImage(mask, 0, 0);
                 ctx.drawImage(canvas, 0, 0);
 
-                connection.sendCanvas(tmpCanvas, this.id)
-                    .then( data => wrt(data) );
+                connection.sendCanvas(tmpCanvas, this.id);
             } else {
-                connection.sendCanvas(canvas, this.id)
-                    .then( data => wrt(data) );
+                connection.sendCanvas(canvas, this.id);
             }
         }, 3000, this));
 
@@ -785,7 +788,7 @@ class Art {
                 preloader.close();
             } );
 
-        setInterval(this.setMask.bind(this), 3000);
+        this.maskInterval = setInterval(this.setMask.bind(this), 3000);
 
         this.tick();
     }
@@ -819,6 +822,8 @@ class ShowPicModal extends Modal{
 
         this.id = null; //будет хранить id картинки, когда модалка открыта.
         this.controlsInited = false; //хранит состояние initControls
+
+        this.artObject = null; //При инициализации арт режима будет хранить экземпляр Art
     }
 
 
@@ -930,6 +935,10 @@ class ShowPicModal extends Modal{
         this.commentsList.textContent = '';
         this.description.textContent = '';
         this.controlsInited = false;
+
+        if (this.artObject) {
+            this.artObject.stopArt();
+        }
         super.close();
     }
 
@@ -973,12 +982,12 @@ class ShowPicModal extends Modal{
         document.querySelector('.js-art-on').addEventListener('click', e => {
             const img = this.pic;
             const artTools = this.modal.querySelector('.image-art');
-            const art = new Art(img, artTools, this.id);
+            this.artObject = new Art(img, artTools, this.id);
         });
         document.querySelector('.js-art-off').addEventListener('click', e => {
             this.pic.textContent = '';
             this.pic.appendChild(this.img);
-            connection.updArtState(null);
+            this.artObject.stopArt();
         });
         super.init();
     }
