@@ -351,6 +351,7 @@ body.modal-opened
       margin-left: 0
       &:last-of-type
         margin-right: 0
+    &-action.stat.stat_active
       span[class^="icon"],
       span[class^=" icon"]
         animation-name: iconOut
@@ -358,8 +359,8 @@ body.modal-opened
         animation-fill-mode: forwards
         animation-timing-function: linear
         cursor: pointer
-      & span[class^="icon"]:hover,
-      & span[class^=" icon"]:hover
+      span[class^="icon"]:hover,
+      span[class^=" icon"]:hover
         animation-name: iconIn
         animation-delay: 0s
         animation-duration: .2s
