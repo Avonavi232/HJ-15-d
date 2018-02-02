@@ -88,6 +88,29 @@ class Modal{
 
 
 /****************************************/
+/****************Прелоадер***************/
+/****************************************/
+class Preloader extends Modal{
+    constructor(){
+        super(document.createElement('div'));
+        this.modal.classList.add('preloader', 'modal');
+
+        const img = new Image();
+        img.src = '../../res/preloader.gif';
+        this.modal.appendChild(img);
+        document.querySelector('body').appendChild(this.modal);
+        this.init();
+    }
+    init(){
+        this.modal.addEventListener("webkitAnimationEnd", () => {this.closeAnimEnd();});
+        this.modal.addEventListener("animationend", () => {this.closeAnimEnd();});
+    }
+}
+const preloader = new Preloader();
+/****************************************/
+
+
+/****************************************/
 /*******имитация ответов сервера*********/
 /****************************************/
 class Server{
@@ -556,9 +579,11 @@ class Feed{
     }
 
     static updFeed(){
+        preloader.open();
         connection.getFeed()
             .then( res => res.json() )
-            .then( feed => Feed.renderFeed(feed));
+            .then( feed => Feed.renderFeed(feed))
+            .then( () => preloader.close() );
     }
 }
 
@@ -785,6 +810,7 @@ class ShowPicModal extends Modal{
         this.controlsInited = false; //хранит состояние initControls
     }
 
+
     renderComment(author, body){
         const container = document.createElement('div');
         container.classList.add('image-comment');
@@ -802,6 +828,7 @@ class ShowPicModal extends Modal{
         return container;
     }
 
+
     updateModalStatsComments(id){
         return connection.getCard(id)
             .then( cardData => {
@@ -817,6 +844,7 @@ class ShowPicModal extends Modal{
                 }
             } );
     }
+
 
     updateModalData(card){
         return connection.getCard(card.dataset.id)
@@ -849,7 +877,9 @@ class ShowPicModal extends Modal{
             });
     }
 
+
     showPic(card){
+        preloader.open();
         this.id = card.dataset.id;
         connection.seeItem(this.id);
         this.updateModalData(card)
@@ -861,13 +891,18 @@ class ShowPicModal extends Modal{
             } )
             .then( ()=>{
                 this.open();
-            } );
+            } )
+            .then( () => {
+                preloader.close();
+            });
     }
+
 
     open(){
         this.img = this.pic.querySelector('img');
         super.open();
     }
+
 
     close(){
         this.pic.textContent = '';
@@ -946,6 +981,8 @@ document.querySelector('.js-feed').addEventListener('click', (e) => {
 });
 
 /****************************************/
+
+
 
 
 
