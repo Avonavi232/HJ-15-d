@@ -189,8 +189,7 @@ class Server{
 
     seeItem(id){
         if (!id) return;
-        const randInt = Math.floor(Math.random() * 200);
-        return fetch(this.baseurl + id + '/seen/' + randInt, {
+        return fetch(this.baseurl + id + '/seen/' + Date.now(), {
             method: 'PUT',
         })
             .then( res => res.json() );
@@ -803,6 +802,8 @@ class ShowPicModal extends Modal{
 
         this.commentForm = modal.querySelector('.js-comment-form');
         this.commentUID = modal.querySelector('.js-comment-uid');
+        this.commentUID.value = localStorage.getItem('YellowGalleryUserName') || '';
+
         this.commentMessage = modal.querySelector('.js-comment-message');
         this.controlsInited = false;
 
@@ -881,20 +882,23 @@ class ShowPicModal extends Modal{
     showPic(card){
         preloader.open();
         this.id = card.dataset.id;
-        connection.seeItem(this.id);
-        this.updateModalData(card)
+        connection.seeItem(this.id)
             .then( () => {
-                if(!this.controlsInited){
-                    this.initControls();
-                    this.controlsInited = true;
-                }
-            } )
-            .then( ()=>{
-                this.open();
-            } )
-            .then( () => {
-                preloader.close();
-            });
+                this.updateModalData(card)
+                    .then( () => {
+                        if(!this.controlsInited){
+                            this.initControls();
+                            this.controlsInited = true;
+                        }
+                    } )
+                    .then( ()=>{
+                        this.open();
+                    } )
+                    .then( () => {
+                        preloader.close();
+                    });
+            } );
+
     }
 
 
@@ -922,15 +926,15 @@ class ShowPicModal extends Modal{
 
     initControls(){
         if(this.controlsInited) return;
-        document.addEventListener('click', e => {
-            for(const pathItem of e.path){
-                if (pathItem.classList.contains('js-image-like')){
-                    break;
-                } else if ( pathItem.tagName === 'BODY' ) return;
-            }
+        this.modal.querySelector('.js-image-like').addEventListener('click', e => {
+            e.preventDefault();
+            preloader.open();
             connection.likeItem(this.id)
                 .then( () => {
-                    this.updateModalStatsComments(this.id);
+                    this.updateModalStatsComments(this.id)
+                        .then( () => {
+                            preloader.close();
+                        });
                 } );
         });
 
@@ -940,10 +944,16 @@ class ShowPicModal extends Modal{
                 alert('Не все поля заполнены');
                 return;
             }
+
+            preloader.open();
+
+            localStorage.setItem('YellowGalleryUserName', this.commentUID.value);
+
             connection.commentItem(this.id, this.commentUID.value, this.commentMessage.value)
                 .then( () => {
                     this.updateModalStatsComments(this.id);
                     this.commentMessage.value = '';
+                    preloader.close();
                 } );
         });
     }
@@ -954,8 +964,6 @@ class ShowPicModal extends Modal{
             const img = this.pic;
             const artTools = this.modal.querySelector('.image-art');
             const art = new Art(img, artTools, this.id);
-            // connection.updArtState(true, this.id);
-            // connection.socketInit();
         });
         document.querySelector('.js-art-off').addEventListener('click', e => {
             this.pic.textContent = '';
