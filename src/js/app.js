@@ -350,6 +350,8 @@ class ImageLoader {
     this.modalUploadSubmitBtn = document.querySelector('.js-upload-form-submit');
     this.modal = new Modal(document.querySelector('.js-upload-modal'));
     this.modal.init();
+
+    this.errorField = document.querySelector('.js-error');
   }
 
   //Поля формы, которые генерируются кодом и не существуют в момент создания экземпляра ImageLoader
@@ -430,15 +432,15 @@ class ImageLoader {
 
   upload() {
     if (!this.imgToUpload) {
-      alert('Attach an image!');
+      this.errorField.textContent = 'Attach an image!';
       return;
     }
     if (!this.uidInput.value) {
-      alert('Enter the UID!');
+      this.errorField.textContent = 'Enter the UID!';
       return;
     }
     if (this.imgToUpload.type.indexOf('png') === -1) {
-      alert('You can only upload an PNG image');
+      this.errorField.textContent = 'You can only upload an PNG image';
       return;
     }
 
@@ -463,8 +465,12 @@ class ImageLoader {
     this.input.addEventListener('change', e => {
       e.preventDefault();
 
-      this.imgToUpload = e.target.files[0];
+      if (e.target.files[0].type.indexOf('png') === -1) {
+        this.errorField.textContent = 'You can only upload an PNG image';
+        return;
+      } else this.errorField.textContent = '';
 
+      this.imgToUpload = e.target.files[0];
       const src = this.getPreviewImg(e.currentTarget.files);
       this.showPreviewImg(src);
       this.showPreviewInfo();
@@ -474,6 +480,11 @@ class ImageLoader {
     //Обработка дропа картинки
     this.dropArea.addEventListener('drop', e => {
       e.preventDefault();
+
+      if (e.dataTransfer.files[0].type.indexOf('png') === -1) {
+        this.errorField.textContent = 'You can only upload an PNG image';
+        return;
+      } else this.errorField.textContent = '';
 
       const src = this.getPreviewImg(e.dataTransfer.files);
       this.imgToUpload = e.dataTransfer.files[0];
@@ -880,6 +891,7 @@ class ShowPicModal extends Modal {
     this.commentForm = modal.querySelector('.js-comment-form');
     this.commentUID = modal.querySelector('.js-comment-uid');
     this.commentUID.value = localStorage.getItem('YellowGalleryUserName') || '';
+    this.errorField = modal.querySelector('.js-comment-error');
 
     this.commentMessage = modal.querySelector('.js-comment-message');
     this.controlsInited = false;
@@ -1030,10 +1042,10 @@ class ShowPicModal extends Modal {
 
     this.commentForm.addEventListener('submit', e => {
       e.preventDefault();
-      if (!this.commentUID || !this.commentMessage) {
-        alert('Не все поля заполнены');
+      if (!this.commentUID.value || !this.commentMessage.value) {
+        this.errorField.textContent = 'Не все поля заполнены';
         return;
-      }
+      } else this.errorField.textContent = '';
 
       preloader.open();
 
