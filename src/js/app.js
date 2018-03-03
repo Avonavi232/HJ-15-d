@@ -60,6 +60,26 @@ function findTargetInPath(className, path) {
   }
 }
 
+function composedPath (el) {
+
+  var path = [];
+
+  while (el) {
+
+    path.push(el);
+
+    if (el.tagName === 'HTML') {
+
+      path.push(document);
+      path.push(window);
+
+      return path;
+    }
+
+    el = el.parentElement;
+  }
+}
+
 
 /****************************************/
 /*************Функционал модалки*********/
@@ -321,7 +341,8 @@ class ImageSidebar {
   }
 
   sidebarToggleHandler = (e) => {
-    findTargetInPath('js-image-sidebar-toggle', e.path) ? this.toggle() : null;
+    const path = e.path || (e.composedPath && e.composedPath()) || composedPath(e.target);
+    findTargetInPath('js-image-sidebar-toggle', path) ? this.toggle() : null;
   };
 
   init(){
@@ -1145,7 +1166,8 @@ showPicModal.init();
 
 //Ловим клик по миниатюре, используя делегирование событий
 document.querySelector('.js-feed').addEventListener('click', (e) => {
-  const target = findTargetInPath('card-thumbnail', e.path);
+  const path = e.path || (e.composedPath && e.composedPath()) || composedPath(e.target);
+  const target = findTargetInPath('card-thumbnail', path);
   target ? showPicModal.showPic(target) : null;
 });
 

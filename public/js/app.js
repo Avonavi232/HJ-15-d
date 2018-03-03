@@ -1,1 +1,1365 @@
-"use strict";var _get=function e(t,n,i){null===t&&(t=Function.prototype);var o=Object.getOwnPropertyDescriptor(t,n);if(void 0===o){var a=Object.getPrototypeOf(t);return null===a?void 0:e(a,n,i)}if("value"in o)return o.value;var r=o.get;return void 0!==r?r.call(i):void 0},_createClass=function(){function e(e,t){for(var n=0;n<t.length;n++){var i=t[n];i.enumerable=i.enumerable||!1,i.configurable=!0,"value"in i&&(i.writable=!0),Object.defineProperty(e,i.key,i)}}return function(t,n,i){return n&&e(t.prototype,n),i&&e(t,i),t}}();function _possibleConstructorReturn(e,t){if(!e)throw new ReferenceError("this hasn't been initialised - super() hasn't been called");return!t||"object"!=typeof t&&"function"!=typeof t?e:t}function _inherits(e,t){if("function"!=typeof t&&null!==t)throw new TypeError("Super expression must either be null or a function, not "+typeof t);e.prototype=Object.create(t&&t.prototype,{constructor:{value:e,enumerable:!1,writable:!0,configurable:!0}}),t&&(Object.setPrototypeOf?Object.setPrototypeOf(e,t):e.__proto__=t)}function _classCallCheck(e,t){if(!(e instanceof t))throw new TypeError("Cannot call a class as a function")}function wrt(e){console.log(e)}function throttle(e,t,n){var i,o;return t||(t=250),function(){var a=n||this,r=+new Date,s=arguments;i&&r<i+t?(clearTimeout(o),o=setTimeout(function(){i=r,e.apply(a,s)},t)):(i=r,e.apply(a,s))}}function findTargetInPath(e,t){var n=!0,i=!1,o=void 0;try{for(var a,r=t[Symbol.iterator]();!(n=(a=r.next()).done);n=!0){var s=a.value;if(s.classList.contains(e))return s;if("BODY"===s.tagName)return null}}catch(e){i=!0,o=e}finally{try{!n&&r.return&&r.return()}finally{if(i)throw o}}}window.editor={events:{},addEventListener:function(e,t){this.events[e]||(this.events[e]=[]),this.events[e].push(t)},removeEventListener:function(e){this.events[e]&&(this.events[e]=[])},emit:function(e,t){var n=this;this.events[e]&&this.events[e].forEach(function(e){return e.call(n,t)})}};var Modal=function(){function e(t){_classCallCheck(this,e),this.modal=t,this.docBody=document.querySelector("body")}return _createClass(e,[{key:"closeAnimEnd",value:function(){this.modal.classList.contains("fadeIn")?(this.modal.classList.remove("fadeIn"),this.docBody.classList.add("modal-opened")):this.modal.classList.contains("fadeOut")&&(this.modal.style.display="none",this.modal.classList.remove("fadeOut"),this.docBody.classList.remove("modal-opened"))}},{key:"open",value:function(){this.modal.style.display="flex",this.modal.classList.remove("fadeOut"),this.modal.classList.add("fadeIn")}},{key:"close",value:function(){this.modal.classList.remove("fadeIn"),this.modal.classList.add("fadeOut")}},{key:"init",value:function(){var e=this;this.modal.querySelector(".js-modal-close").addEventListener("click",function(){e.close()}),this.modal.addEventListener("webkitAnimationEnd",function(){e.closeAnimEnd()}),this.modal.addEventListener("animationend",function(){e.closeAnimEnd()}),window.addEventListener("click",function(t){t.target===e.modal&&e.close()})}}]),e}(),Preloader=function(e){function t(){_classCallCheck(this,t);var e=_possibleConstructorReturn(this,(t.__proto__||Object.getPrototypeOf(t)).call(this,document.createElement("div")));e.modal.classList.add("preloader","modal");var n=new Image;return n.src="https://raw.githubusercontent.com/Avonavi232/HJ-15-d/master/res/preloader.gif",e.modal.appendChild(n),document.querySelector("body").appendChild(e.modal),e.init(),e}return _inherits(t,Modal),_createClass(t,[{key:"init",value:function(){var e=this;this.modal.addEventListener("webkitAnimationEnd",function(){e.closeAnimEnd()}),this.modal.addEventListener("animationend",function(){e.closeAnimEnd()})}}]),t}(),preloader=new Preloader,Server=function(){function e(){_classCallCheck(this,e),this.art=null,this.baseurl="https://neto-api.herokuapp.com/yellowgallery/",this.oldurl="./src/js/feed.json",this.wssBaseUrl="wss://neto-api.herokuapp.com/yellowgallery/"}return _createClass(e,[{key:"getFeed",value:function(){return fetch(this.baseurl,{method:"GET"})}},{key:"getCard",value:function(e){return fetch(this.baseurl+e,{method:"GET"}).then(function(e){return e.json()})}},{key:"uploadItem",value:function(e){return fetch(this.baseurl,{method:"POST",body:e}).then(function(e){return e.json()})}},{key:"likeItem",value:function(e){if(e){var t=Math.floor(10*Math.random());return fetch(this.baseurl+e+"/likes/"+t,{method:"PUT"}).then(function(e){return e.json()})}}},{key:"commentItem",value:function(e,t,n){if(e)return fetch(this.baseurl+e+"/comments",{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body:"uid="+encodeURIComponent(t)+"&message="+encodeURIComponent(n)}).then(function(e){return e.json()})}},{key:"seeItem",value:function(e){if(e)return fetch(this.baseurl+e+"/seen/"+Date.now(),{method:"PUT"}).then(function(e){return e.json()})}},{key:"artInit",value:function(e){var t=this,n=new WebSocket(this.wssBaseUrl+e);return n.addEventListener("open",function(){wrt("Соединение установлено.")}),n.addEventListener("close",function(e){e.wasClean?wrt("Соединение закрыто чисто"):wrt("Обрыв соединения"),wrt("Код: "+e.code+" причина: "+e.reason)}),n.addEventListener("message",function(e){wrt("Получены данные "),wrt(JSON.parse(e.data))}),n.addEventListener("error",function(e){wrt("Ошибка "+e.message),t.socket=null}),n}},{key:"getMask",value:function(e){if(e)return new Promise(function(t,n){fetch("https://neto-api.herokuapp.com/yellowgallery/"+e+"/mask/"+Date.now(),{method:"GET"}).then(function(e){200<=e.status&&e.status<300?t(e.blob()):n()})})}},{key:"sendCanvas",value:function(e,t){var n=this;return new Promise(function(i,o){e.toBlob(function(e){var o=new FormData;o.append("image",e),fetch(n.baseurl+t+"/mask ",{method:"PUT",body:o}).then(function(e){i(e.json())})})})}},{key:"sendCanvasSocket",value:function(e,t){e.toBlob(function(e){t.send(e)})}}]),e}(),connection=new Server,ImageSidebar=function(){function e(t){var n=this;_classCallCheck(this,e),this.sidebarToggleHandler=function(e){findTargetInPath("js-image-sidebar-toggle",e.path)&&n.toggle()},this.sidebar=document.querySelector("."+t.sidebar),this.art=document.querySelector("."+t.art),this.descr=document.querySelector("."+t.descr),this.state=!0,this.toggleButtons=document.querySelectorAll(".js-image-sidebar-toggle")}return _createClass(e,[{key:"toggle",value:function(){this.state?(this.descr.style.transform="translateX(600px)",this.art.style.transform="translateX(0px)",this.state=!1):(this.descr.style.transform="translateX(0px)",this.art.style.transform="translateX(-600px)",this.state=!0)}},{key:"init",value:function(){this.sidebar.addEventListener("click",this.sidebarToggleHandler)}}]),e}(),imageSidebar=new ImageSidebar({sidebar:"image-sidebar",art:"image-art",descr:"image-infoblock"});imageSidebar.init();var ImageLoader=function(){function e(t){_classCallCheck(this,e),this.dropArea=t,this.dropAreaInner=this.dropArea.firstElementChild,this.inputReplacer=document.querySelector(".js-upload-input-replacer"),this.input=document.querySelector(".js-upload-input"),this.preview=document.querySelector(".js-upload-image-preview"),this.form=document.querySelector(".js-upload-form"),this.imgToUpload=null,this.modalOpenBtn=document.querySelector(".js-upload-pic-btn"),this.modalUploadCancelBtn=document.querySelector(".js-upload-cancel"),this.modalUploadSubmitBtn=document.querySelector(".js-upload-form-submit"),this.modal=new Modal(document.querySelector(".js-upload-modal")),this.modal.init(),this.errorField=document.querySelector(".js-error")}return _createClass(e,[{key:"getPreviewImg",value:function(e){if(e.length&&-1!==e[0].type.indexOf("image"))return URL.createObjectURL(e[0])}},{key:"showPreviewImg",value:function(e){var t=document.createElement("img");t.src=e,t.addEventListener("load",function(e){URL.revokeObjectURL(e.target.src)}),this.removePreviewImg(),this.preview.appendChild(t)}},{key:"removePreviewImg",value:function(){this.preview.textContent=""}},{key:"showPreviewInfo",value:function(){var e=document.createElement("form");e.classList.add("upload-infoblock");var t=document.createElement("div");t.classList.add("justified"),e.appendChild(t);var n=document.createElement("label");n.setAttribute("for","label-upload-uid"),n.textContent="Опубликовать от имени автора:",t.appendChild(n);var i=document.createElement("input");i.id="label-upload-uid",i.name="uid",i.classList.add("js-upload-uid"),t.appendChild(i);var o=document.createElement("div");o.classList.add("justified"),e.appendChild(o);var a=document.createElement("label");a.setAttribute("for","label-upload-description"),a.textContent="Описание изображения:",o.appendChild(a);var r=document.createElement("textarea");r.id="label-upload-description",r.name="description",r.classList.add("js-upload-description"),o.appendChild(r),this.preview.appendChild(e)}},{key:"uploadCancel",value:function(){this.modal.close(),this.removePreviewImg()}},{key:"upload",value:function(){var e=this;if(this.imgToUpload)if(this.uidInput.value)if(-1!==this.imgToUpload.type.indexOf("png")){preloader.open();var t=new FormData(this.preview.querySelector("form"));t.append("image",this.imgToUpload),connection.uploadItem(t).then(function(){preloader.close(),e.modal.close(),e.removePreviewImg()})}else this.errorField.textContent="You can only upload an PNG image";else this.errorField.textContent="Enter the UID!";else this.errorField.textContent="Attach an image!"}},{key:"init",value:function(){var e=this;this.input.addEventListener("change",function(t){if(t.preventDefault(),-1!==t.target.files[0].type.indexOf("png")){e.errorField.textContent="",e.imgToUpload=t.target.files[0];var n=e.getPreviewImg(t.currentTarget.files);e.showPreviewImg(n),e.showPreviewInfo()}else e.errorField.textContent="You can only upload an PNG image"}),this.dropArea.addEventListener("drop",function(t){if(t.preventDefault(),-1!==t.dataTransfer.files[0].type.indexOf("png")){e.errorField.textContent="";var n=e.getPreviewImg(t.dataTransfer.files);e.imgToUpload=t.dataTransfer.files[0],e.showPreviewImg(n),e.showPreviewInfo(),e.dropArea.classList.remove("upload-modal__drop-area_dragover")}else e.errorField.textContent="You can only upload an PNG image"}),this.dropArea.addEventListener("dragover",function(t){t.preventDefault(),t.target!==e.dropArea&&t.target!==e.dropAreaInner||e.dropArea.classList.add("upload-modal__drop-area_dragover")}),this.inputReplacer.addEventListener("click",function(){e.input.click()}),this.dropArea.addEventListener("click",function(){e.input.click()}),this.modalOpenBtn.addEventListener("click",function(){e.modal.open()}),this.modalUploadCancelBtn.addEventListener("click",function(){e.uploadCancel()}),this.form.addEventListener("submit",function(t){t.preventDefault(),e.upload()})}},{key:"uidInput",get:function(){return this.form.querySelector(".js-upload-uid")}},{key:"descrInput",get:function(){return this.form.querySelector(".js-upload-description")}}]),e}(),dropArea=new ImageLoader(document.querySelector(".js-drop-area"));dropArea.init();var Feed=function(){function e(){_classCallCheck(this,e)}return _createClass(e,null,[{key:"createStat",value:function(e,t){var n=document.createElement("td"),i=document.createElement("p");i.classList.add("stat"),n.appendChild(i);var o=document.createElement("span");o.classList.add(e),i.appendChild(o);var a=document.createElement("span");return a.textContent=t,i.appendChild(a),n}},{key:"createCard",value:function(t){var n=t.likes?Object.keys(t.likes).length:0,i=t.comments?Object.keys(t.comments).length:0,o=t.seen?Object.keys(t.seen).length:0,a=t.art?Object.keys(t.art).length:0,r=document.createElement("div");r.classList.add("card-thumbnail"),r.dataset.id=t.id;var s=document.createElement("div");s.classList.add("card-thumbnail__overlay"),r.appendChild(s);var c=document.createElement("div");c.classList.add("card-thumbnail__stats","stats"),r.appendChild(c);var l=document.createElement("table");c.appendChild(l);var d=document.createElement("tr");d.appendChild(e.createStat("icon-heart",n)),d.appendChild(e.createStat("icon-bubble",i)),l.appendChild(d.cloneNode(!0)),d.textContent="",d.appendChild(e.createStat("icon-eye",o)),d.appendChild(e.createStat("icon-pencil",a)),l.appendChild(d);var u=document.createElement("img");return u.src=t.url,r.appendChild(u),r}},{key:"renderFeed",value:function(t){var n=0,i=document.createDocumentFragment(),o=!0,a=!1,r=void 0;try{for(var s,c=t[Symbol.iterator]();!(o=(s=c.next()).done);o=!0){var l=s.value;if(0===n){var d=document.createElement("div");d.classList.add("row"),i.appendChild(d)}var u=i.lastElementChild,h=document.createElement("div");h.classList.add("col-sm-4"),u.appendChild(h),h.appendChild(e.createCard(l)),3==++n&&(n=0)}}catch(e){a=!0,r=e}finally{try{!o&&c.return&&c.return()}finally{if(a)throw r}}e.feed.textContent="",e.feed.appendChild(i)}},{key:"updFeed",value:function(){preloader.open(),connection.getFeed().then(function(e){return e.json()}).then(function(t){return e.renderFeed(t)}).then(function(){return preloader.close()})}},{key:"feed",get:function(){return document.querySelector(".js-feed")}}]),e}();Feed.updFeed();var Art=function(){function e(t,n){var i=this;_classCallCheck(this,e),this.parentModal=n,this.imgContainer=this.parentModal.pic,this.img=this.imgContainer.querySelector("img"),this.id=this.parentModal.id,this.canvas=document.createElement("canvas"),this.canvas.height=this.img.clientHeight,this.canvas.width=this.img.clientWidth,this.ctx=this.canvas.getContext("2d"),this.brushColorInput=t.querySelector(".art-controls-color"),this.brushWidthInput=t.querySelector(".art-controls-size"),this.brushColor=this.brushColorInput.value,this.brushWidth=this.brushWidthInput.value,this.ctx.lineJoin="round",this.ctx.lineCap="round",this.shiftPressed=0,this.needsRepaint=!1,this.curves=[],this.mouseHolded=!1,this.socket=connection.artInit(this.id),this.socket.addEventListener("close",function(){i.socket=null}),this.socket.addEventListener("error",function(){i.socket=null}),this.artIsActive=!0,this.eventListeners=[],this.init()}return _createClass(e,[{key:"repaint",value:function(){this.ctx.clearRect(0,0,this.canvas.width,this.canvas.height);var e=!0,t=!1,n=void 0;try{for(var i,o=this.curves[Symbol.iterator]();!(e=(i=o.next()).done);e=!0){var a=i.value;this.circle(a[0]),this.smoothCurve(a)}}catch(e){t=!0,n=e}finally{try{!e&&o.return&&o.return()}finally{if(t)throw n}}}},{key:"circle",value:function(e){this.ctx.beginPath(),this.ctx.arc(e[0],e[1],e[3]/2,0,2*Math.PI),this.ctx.save(),this.ctx.fillStyle=e[2],this.ctx.lineWidth=e[3],this.ctx.fill(),this.ctx.restore()}},{key:"smoothCurveBetween",value:function(e,t){var n=(e[0]+t[0])/2,i=(e[1]+t[1])/2;this.ctx.quadraticCurveTo(e[0],e[1],n,i)}},{key:"smoothCurve",value:function(e){this.ctx.beginPath(),this.ctx.moveTo(e[0][0],e[0][1]);for(var t=1;t<e.length-1;t++)this.smoothCurveBetween(e[t],e[t+1]);this.ctx.strokeStyle=e[e.length-1][2],this.ctx.lineWidth=e[e.length-1][3],this.ctx.stroke()}},{key:"tick",value:function(){var e=this;this.shiftPressedControl(),this.needsRepaint&&(this.repaint(),this.needsRepaint=!1),window.requestAnimationFrame(function(){e.artIsActive&&e.tick()})}},{key:"shiftPressedControl",value:function(){var e=this;document.addEventListener("keydown",function(t){t.shiftKey?e.shiftPressed=1:e.shiftPressed=0}),document.addEventListener("keyup",function(t){t.shiftKey?e.shiftPressed=1:e.shiftPressed=0})}},{key:"checkBoundaries",value:function(e){return e!==this.canvas?0:1}},{key:"createMask",value:function(e){var t=new Image;window.URL||window.webkitURL;return t.src=e,t.crossOrigin="Anonymous",t.classList.add("js-mask"),t.style.width=this.canvas.width+"px",t.style.height=this.canvas.height+"px",t}},{key:"updMask",value:function(e){var t=this.createMask(e),n=this.imgContainer.querySelector(".js-mask");n&&n.remove(),this.imgContainer.insertBefore(t,this.canvas)}},{key:"sendMask",value:function(e){var t=this;e.toBlob(function(e){t.socket&&t.socket.send(e)})}},{key:"createMaskLink",value:function(e){return e.substr(0,e.indexOf("nocache")-1)}},{key:"stopArt",value:function(){this.socket&&this.socket.close(),delete this.socket,this.artIsActive=!1,this.eventListeners.length&&this.eventListeners.forEach(function(e){e.object.removeEventListener(e.type,e.listener)})}},{key:"mergeCanvasWithMask",value:function(e){var t=this.canvas.cloneNode(!1);return t.getContext("2d").drawImage(e,0,0),t}},{key:"canvasUpdateHandler",value:function(e){if(this.socket&&1===this.socket.readyState){var t=this.imgContainer.querySelector(".js-mask"),n=t?this.mergeCanvasWithMask(t):e;this.sendMask(n)}}},{key:"socketMessageHandler",value:function(e){var t=JSON.parse(e.data);if("mask"===t.event){var n=t.url,i=this.createMaskLink(n);this.updMask(i)}}},{key:"init",value:function(){var e=this;this.imgContainer.appendChild(this.canvas),this.shiftPressedControl(),window.addEventListener("resize",function(){e.ctx.lineJoin="round",e.ctx.lineCap="round",e.ctx.clearRect(0,0,e.canvas.width,e.canvas.height)}),this.canvas.addEventListener("mousedown",function(t){t.preventDefault(),e.mouseHolded=!0;var n=[];n.push([t.offsetX,t.offsetY,e.brushColor,e.brushWidth]),e.curves.push(n),e.needsRepaint=!0}),document.addEventListener("mouseup",function(){e.mouseHolded&&(window.editor.emit("update",e.canvas),e.mouseHolded=!1)}),this.canvas.addEventListener("mousemove",function(t){t.preventDefault(),e.mouseHolded&&(e.curves[e.curves.length-1].push([t.offsetX,t.offsetY,e.brushColor,e.brushWidth]),e.needsRepaint=!0)}),this.canvas.addEventListener("dblclick",function(t){t.preventDefault(),e.ctx.clearRect(0,0,e.canvas.width,e.canvas.height),e.curves=[]}),this.brushColorInput.addEventListener("change",function(t){e.brushColor=t.target.value}),this.brushWidthInput.addEventListener("change",function(t){e.brushWidth=t.target.value});var t=this.canvasUpdateHandler.bind(this);if(this.eventListeners.push({object:window.editor,type:"update",listener:t}),window.editor.addEventListener("update",t),this.socket){var n=this.socketMessageHandler.bind(this);this.eventListeners.push({object:this.socket,type:"message",listener:n}),this.socket.addEventListener("message",n)}this.tick()}}]),e}(),ShowPicModal=function(e){function t(e){_classCallCheck(this,t);var n=_possibleConstructorReturn(this,(t.__proto__||Object.getPrototypeOf(t)).call(this,e));return n.pic=e.querySelector(".js-image-natural"),n.likes=e.querySelector(".js-image-like-counter"),n.comments=e.querySelector(".js-image-comment-counter"),n.seen=e.querySelector(".js-image-seen-counter"),n.art=e.querySelector(".js-art-counter"),n.author=e.querySelector(".js-image-author"),n.postDate=e.querySelector(".js-image-date"),n.tags=e.querySelector(".js-image-hashtags"),n.commentsList=e.querySelector(".image-comments"),n.description=e.querySelector(".js-image-description"),n.commentForm=e.querySelector(".js-comment-form"),n.commentUID=e.querySelector(".js-comment-uid"),n.commentUID.value=localStorage.getItem("YellowGalleryUserName")||"",n.errorField=e.querySelector(".js-comment-error"),n.commentMessage=e.querySelector(".js-comment-message"),n.controlsInited=!1,n.id=null,n.controlsInited=!1,n.artObject=null,n.hasMask=!1,n}return _inherits(t,Modal),_createClass(t,[{key:"renderComment",value:function(e,t){var n=document.createElement("div");n.classList.add("image-comment");var i=document.createElement("span");i.classList.add("image-comment-author"),i.textContent=e+": ",n.appendChild(i);var o=document.createElement("span");return o.classList.add("image-comment-body"),o.textContent=t,n.appendChild(o),n}},{key:"updateModalStatsComments",value:function(e){var t=this;return connection.getCard(e).then(function(e){t.likes.textContent=e.likes?Object.keys(e.likes).length:0,t.comments.textContent=e.comments?Object.keys(e.comments).length:0,t.seen.textContent=e.seen?Object.keys(e.seen).length:0,t.art.textContent=e.art?Object.keys(e.art).length:0,t.commentsList.textContent="";for(var n in e.comments)t.commentsList.appendChild(t.renderComment(e.comments[n].uid,e.comments[n].message))})}},{key:"updateModalData",value:function(e){var t=this;return connection.getCard(e.dataset.id).then(function(e){t.pic.textContent="";var n=document.createElement("img");return n.src=e.url,t.pic.appendChild(n),e}).then(function(e){return t.likes.textContent=e.likes?Object.keys(e.likes).length:0,t.comments.textContent=e.comments?Object.keys(e.comments).length:0,t.seen.textContent=e.seen?Object.keys(e.seen).length:0,t.art.textContent=e.art?Object.keys(e.art).length:0,e}).then(function(e){t.author.textContent=e.uid,t.postDate.textContent=new Date(e.timestamp).toLocaleString(),t.description.textContent=e.description,e.hasOwnProperty("mask")&&(t.hasMask=!0);for(var n in e.comments)t.commentsList.appendChild(t.renderComment(e.comments[n].uid,e.comments[n].message))})}},{key:"showPic",value:function(e){var t=this;preloader.open(),this.id=e.dataset.id,connection.seeItem(this.id).then(function(){t.updateModalData(e).then(function(){t.controlsInited||(t.initControls(),t.controlsInited=!0)}).then(function(){t.open()}).then(function(){preloader.close()})})}},{key:"open",value:function(){this.img=this.pic.querySelector("img"),_get(t.prototype.__proto__||Object.getPrototypeOf(t.prototype),"open",this).call(this)}},{key:"close",value:function(){this.pic.textContent="",this.likes.textContent="",this.comments.textContent="",this.seen.textContent="",this.art.textContent="",this.author.textContent="",this.postDate.textContent="",this.tags.textContent="",this.commentsList.textContent="",this.description.textContent="",this.controlsInited=!1,this.artObject&&this.artObject.stopArt(),_get(t.prototype.__proto__||Object.getPrototypeOf(t.prototype),"close",this).call(this)}},{key:"initControls",value:function(){var e=this;this.controlsInited||(this.modal.querySelector(".js-image-like").addEventListener("click",function(t){t.preventDefault(),preloader.open(),connection.likeItem(e.id).then(function(){e.updateModalStatsComments(e.id).then(function(){preloader.close()})})}),this.commentForm.addEventListener("submit",function(t){t.preventDefault(),e.commentUID.value&&e.commentMessage.value?(e.errorField.textContent="",preloader.open(),localStorage.setItem("YellowGalleryUserName",e.commentUID.value),connection.commentItem(e.id,e.commentUID.value,e.commentMessage.value).then(function(){e.updateModalStatsComments(e.id),e.commentMessage.value="",preloader.close()})):e.errorField.textContent="Не все поля заполнены"}))}},{key:"init",value:function(){var e=this;document.querySelector(".js-art-on").addEventListener("click",function(t){e.pic;var n=e.modal.querySelector(".image-art");e.artObject=new Art(n,e)}),document.querySelector(".js-art-off").addEventListener("click",function(t){e.pic.textContent="",e.pic.appendChild(e.img),e.artObject.stopArt(),e.artObject.active=!1}),_get(t.prototype.__proto__||Object.getPrototypeOf(t.prototype),"init",this).call(this)}}]),t}(),showPicModal=new ShowPicModal(document.querySelector(".js-show-pic-modal"));showPicModal.init(),document.querySelector(".js-feed").addEventListener("click",function(e){var t=findTargetInPath("card-thumbnail",e.path);t&&showPicModal.showPic(t)});
+'use strict';
+
+var _get = function get(object, property, receiver) { if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { return get(parent, property, receiver); } } else if ("value" in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } };
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function wrt(d) {
+  console.log(d);
+}
+
+window.editor = {
+  events: {},
+  addEventListener: function addEventListener(event, callback) {
+    if (!this.events[event]) {
+      this.events[event] = [];
+    }
+    this.events[event].push(callback);
+  },
+  removeEventListener: function removeEventListener(event) {
+    if (this.events[event]) {
+      this.events[event] = [];
+    }
+  },
+  emit: function emit(event, data) {
+    var _this = this;
+
+    if (!this.events[event]) {
+      return;
+    }
+    this.events[event].forEach(function (callback) {
+      return callback.call(_this, data);
+    });
+  }
+};
+
+function throttle(fn, threshhold, scope) {
+  threshhold || (threshhold = 250);
+  var last, deferTimer;
+  return function () {
+    var context = scope || this;
+
+    var now = +new Date(),
+        args = arguments;
+    if (last && now < last + threshhold) {
+      // hold on to it
+      clearTimeout(deferTimer);
+      deferTimer = setTimeout(function () {
+        last = now;
+        fn.apply(context, args);
+      }, threshhold);
+    } else {
+      last = now;
+      fn.apply(context, args);
+    }
+  };
+}
+
+function findTargetInPath(className, path) {
+  var _iteratorNormalCompletion = true;
+  var _didIteratorError = false;
+  var _iteratorError = undefined;
+
+  try {
+    for (var _iterator = path[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+      var curr = _step.value;
+
+      if (curr.classList.contains(className)) {
+        return curr;
+      } else if (curr.tagName === 'BODY') {
+        return null;
+      }
+    }
+  } catch (err) {
+    _didIteratorError = true;
+    _iteratorError = err;
+  } finally {
+    try {
+      if (!_iteratorNormalCompletion && _iterator.return) {
+        _iterator.return();
+      }
+    } finally {
+      if (_didIteratorError) {
+        throw _iteratorError;
+      }
+    }
+  }
+}
+
+function composedPath(el) {
+
+  var path = [];
+
+  while (el) {
+
+    path.push(el);
+
+    if (el.tagName === 'HTML') {
+
+      path.push(document);
+      path.push(window);
+
+      return path;
+    }
+
+    el = el.parentElement;
+  }
+}
+
+/****************************************/
+/*************Функционал модалки*********/
+
+/****************************************/
+
+var Modal = function () {
+  function Modal(modal) {
+    _classCallCheck(this, Modal);
+
+    this.modal = modal;
+    this.docBody = document.querySelector('body');
+  }
+
+  _createClass(Modal, [{
+    key: 'closeAnimEnd',
+    value: function closeAnimEnd() {
+      if (this.modal.classList.contains('fadeIn')) {
+        this.modal.classList.remove('fadeIn');
+        this.docBody.classList.add('modal-opened');
+      } else if (this.modal.classList.contains('fadeOut')) {
+        this.modal.style.display = 'none';
+        this.modal.classList.remove('fadeOut');
+        this.docBody.classList.remove('modal-opened');
+      }
+    }
+  }, {
+    key: 'open',
+    value: function open() {
+      this.modal.style.display = 'flex';
+      this.modal.classList.remove('fadeOut');
+      this.modal.classList.add('fadeIn');
+    }
+  }, {
+    key: 'close',
+    value: function close() {
+      this.modal.classList.remove('fadeIn');
+      this.modal.classList.add('fadeOut');
+    }
+  }, {
+    key: 'init',
+    value: function init() {
+      var _this2 = this;
+
+      this.modal.querySelector('.js-modal-close').addEventListener('click', function () {
+        _this2.close();
+      });
+      this.modal.addEventListener("webkitAnimationEnd", function () {
+        _this2.closeAnimEnd();
+      });
+      this.modal.addEventListener("animationend", function () {
+        _this2.closeAnimEnd();
+      });
+      window.addEventListener('click', function (e) {
+        if (e.target === _this2.modal) {
+          _this2.close();
+        }
+      });
+    }
+  }]);
+
+  return Modal;
+}();
+
+/****************************************/
+
+/****************************************/
+/****************Прелоадер***************/
+
+/****************************************/
+
+
+var Preloader = function (_Modal) {
+  _inherits(Preloader, _Modal);
+
+  function Preloader() {
+    _classCallCheck(this, Preloader);
+
+    var _this3 = _possibleConstructorReturn(this, (Preloader.__proto__ || Object.getPrototypeOf(Preloader)).call(this, document.createElement('div')));
+
+    _this3.modal.classList.add('preloader', 'modal');
+
+    var img = new Image();
+    img.src = 'https://raw.githubusercontent.com/Avonavi232/HJ-15-d/master/res/preloader.gif';
+    _this3.modal.appendChild(img);
+    document.querySelector('body').appendChild(_this3.modal);
+    _this3.init();
+    return _this3;
+  }
+
+  _createClass(Preloader, [{
+    key: 'init',
+    value: function init() {
+      var _this4 = this;
+
+      this.modal.addEventListener("webkitAnimationEnd", function () {
+        _this4.closeAnimEnd();
+      });
+      this.modal.addEventListener("animationend", function () {
+        _this4.closeAnimEnd();
+      });
+    }
+  }]);
+
+  return Preloader;
+}(Modal);
+
+var preloader = new Preloader();
+/****************************************/
+
+/****************************************/
+/*******имитация ответов сервера*********/
+
+/****************************************/
+
+var Server = function () {
+  function Server() {
+    _classCallCheck(this, Server);
+
+    this.art = null;
+    this.baseurl = 'https://neto-api.herokuapp.com/yellowgallery/';
+    this.oldurl = './src/js/feed.json';
+    this.wssBaseUrl = 'wss://neto-api.herokuapp.com/yellowgallery/';
+  }
+
+  //Метод отдает всю ленту (массив объектов)
+
+
+  _createClass(Server, [{
+    key: 'getFeed',
+    value: function getFeed() {
+      return fetch(this.baseurl, {
+        method: 'GET'
+      });
+    }
+
+    //Метод отдает одну карточку по id (объект)
+
+  }, {
+    key: 'getCard',
+    value: function getCard(id) {
+      return fetch(this.baseurl + id, {
+        method: 'GET'
+      }).then(function (res) {
+        return res.json();
+      });
+    }
+
+    //Код общения с сервером
+
+  }, {
+    key: 'uploadItem',
+    value: function uploadItem(formdata) {
+      return fetch(this.baseurl, {
+        method: 'POST',
+        body: formdata
+      }).then(function (res) {
+        return res.json();
+      });
+    }
+  }, {
+    key: 'likeItem',
+    value: function likeItem(id) {
+      if (!id) return;
+      var randInt = Math.floor(Math.random() * 10);
+      return fetch(this.baseurl + id + '/likes/' + randInt, {
+        method: 'PUT'
+      }).then(function (res) {
+        return res.json();
+      });
+    }
+  }, {
+    key: 'commentItem',
+    value: function commentItem(id, uid, message) {
+      if (!id) return;
+      return fetch(this.baseurl + id + '/comments', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: 'uid=' + encodeURIComponent(uid) + '&message=' + encodeURIComponent(message)
+      }).then(function (res) {
+        return res.json();
+      });
+    }
+  }, {
+    key: 'seeItem',
+    value: function seeItem(id) {
+      if (!id) return;
+      return fetch(this.baseurl + id + '/seen/' + Date.now(), {
+        method: 'PUT'
+      }).then(function (res) {
+        return res.json();
+      });
+    }
+  }, {
+    key: 'artInit',
+    value: function artInit(id) {
+      var _this5 = this;
+
+      var socket = new WebSocket(this.wssBaseUrl + id);
+
+      socket.addEventListener('open', function () {
+        wrt("Соединение установлено.");
+      });
+
+      socket.addEventListener('close', function (event) {
+        if (event.wasClean) {
+          wrt('Соединение закрыто чисто');
+        } else {
+          wrt('Обрыв соединения'); // например, "убит" процесс сервера
+        }
+        wrt('Код: ' + event.code + ' причина: ' + event.reason);
+      });
+
+      socket.addEventListener('message', function (event) {
+        wrt("Получены данные ");
+        wrt(JSON.parse(event.data));
+      });
+
+      socket.addEventListener('error', function (error) {
+        wrt("Ошибка " + error.message);
+        _this5.socket = null;
+      });
+
+      return socket;
+    }
+  }, {
+    key: 'getMask',
+    value: function getMask(id) {
+      if (!id) return;
+
+      return new Promise(function (resolve, reject) {
+        fetch('https://neto-api.herokuapp.com/yellowgallery/' + id + '/mask/' + Date.now(), {
+          method: 'GET'
+        }).then(function (res) {
+          if (200 <= res.status && res.status < 300) {
+            resolve(res.blob());
+          } else {
+            reject();
+          }
+        });
+      });
+    }
+  }, {
+    key: 'sendCanvas',
+    value: function sendCanvas(canvas, id) {
+      var _this6 = this;
+
+      return new Promise(function (resolve, reject) {
+        canvas.toBlob(function (blob) {
+          var formdata = new FormData();
+          formdata.append('image', blob);
+          fetch(_this6.baseurl + id + '/mask ', {
+            method: 'PUT',
+            body: formdata
+          }).then(function (res) {
+            resolve(res.json());
+          });
+        });
+      });
+    }
+  }, {
+    key: 'sendCanvasSocket',
+    value: function sendCanvasSocket(canvas, socket) {
+      canvas.toBlob(function (blob) {
+        socket.send(blob);
+      });
+    }
+  }]);
+
+  return Server;
+}();
+
+var connection = new Server();
+
+/****************************************/
+
+/****************************************/
+/******Поведение сайдбара модалки********/
+
+/****************************************/
+
+var ImageSidebar = function () {
+  function ImageSidebar(classes) {
+    var _this7 = this;
+
+    _classCallCheck(this, ImageSidebar);
+
+    this.sidebarToggleHandler = function (e) {
+      var path = e.path || e.composedPath && e.composedPath() || composedPath(e.target);
+      findTargetInPath('js-image-sidebar-toggle', path) ? _this7.toggle() : null;
+    };
+
+    this.sidebar = document.querySelector('.' + classes.sidebar);
+    this.art = document.querySelector('.' + classes.art);
+    this.descr = document.querySelector('.' + classes.descr);
+    this.state = true;
+
+    this.toggleButtons = document.querySelectorAll('.js-image-sidebar-toggle');
+  }
+
+  _createClass(ImageSidebar, [{
+    key: 'toggle',
+    value: function toggle() {
+      if (this.state) {
+        this.descr.style.transform = 'translateX(600px)';
+        this.art.style.transform = 'translateX(0px)';
+        this.state = false;
+      } else {
+        this.descr.style.transform = 'translateX(0px)';
+        this.art.style.transform = 'translateX(-600px)';
+        this.state = true;
+      }
+    }
+  }, {
+    key: 'init',
+    value: function init() {
+      this.sidebar.addEventListener('click', this.sidebarToggleHandler);
+    }
+  }]);
+
+  return ImageSidebar;
+}();
+
+//Инициализируем поведение сайдбара при просмотре картинки
+
+
+var imageSidebar = new ImageSidebar({
+  sidebar: 'image-sidebar',
+  art: 'image-art',
+  descr: 'image-infoblock'
+});
+imageSidebar.init();
+/****************************************/
+
+/****************************************/
+/*************ImageLoader****************/
+
+/****************************************/
+
+var ImageLoader = function () {
+  function ImageLoader(dropArea) {
+    _classCallCheck(this, ImageLoader);
+
+    this.dropArea = dropArea;
+    this.dropAreaInner = this.dropArea.firstElementChild;
+    this.inputReplacer = document.querySelector('.js-upload-input-replacer');
+    this.input = document.querySelector('.js-upload-input');
+    this.preview = document.querySelector('.js-upload-image-preview');
+
+    this.form = document.querySelector('.js-upload-form');
+    this.imgToUpload = null;
+
+    this.modalOpenBtn = document.querySelector('.js-upload-pic-btn');
+    this.modalUploadCancelBtn = document.querySelector('.js-upload-cancel');
+    this.modalUploadSubmitBtn = document.querySelector('.js-upload-form-submit');
+    this.modal = new Modal(document.querySelector('.js-upload-modal'));
+    this.modal.init();
+
+    this.errorField = document.querySelector('.js-error');
+  }
+
+  //Поля формы, которые генерируются кодом и не существуют в момент создания экземпляра ImageLoader
+
+
+  _createClass(ImageLoader, [{
+    key: 'getPreviewImg',
+
+
+    //методы управления превьюшкой
+    value: function getPreviewImg(files) {
+      if (!files.length) return; //если массив пустой - выходим
+      if (files[0].type.indexOf('image') === -1) return; //если не картинка - выходим
+      return URL.createObjectURL(files[0]);
+    }
+  }, {
+    key: 'showPreviewImg',
+    value: function showPreviewImg(src) {
+      var img = document.createElement('img');
+      img.src = src;
+      img.addEventListener('load', function (event) {
+        URL.revokeObjectURL(event.target.src);
+      });
+      this.removePreviewImg();
+      this.preview.appendChild(img);
+    }
+  }, {
+    key: 'removePreviewImg',
+    value: function removePreviewImg() {
+      this.preview.textContent = '';
+    }
+  }, {
+    key: 'showPreviewInfo',
+    value: function showPreviewInfo() {
+      var container = document.createElement('form');
+      container.classList.add('upload-infoblock');
+
+      var uidContainer = document.createElement('div');
+      uidContainer.classList.add('justified');
+      container.appendChild(uidContainer);
+
+      var uidLabel = document.createElement('label');
+      uidLabel.setAttribute('for', 'label-upload-uid');
+      uidLabel.textContent = 'Опубликовать от имени автора:';
+      uidContainer.appendChild(uidLabel);
+
+      var uidInput = document.createElement('input');
+      uidInput.id = 'label-upload-uid';
+      uidInput.name = 'uid';
+      uidInput.classList.add('js-upload-uid');
+      uidContainer.appendChild(uidInput);
+
+      var descriptionContainer = document.createElement('div');
+      descriptionContainer.classList.add('justified');
+      container.appendChild(descriptionContainer);
+
+      var descriptionLabel = document.createElement('label');
+      descriptionLabel.setAttribute('for', 'label-upload-description');
+      descriptionLabel.textContent = 'Описание изображения:';
+      descriptionContainer.appendChild(descriptionLabel);
+
+      var descriptionInput = document.createElement('textarea');
+      descriptionInput.id = 'label-upload-description';
+      descriptionInput.name = 'description';
+      descriptionInput.classList.add('js-upload-description');
+      descriptionContainer.appendChild(descriptionInput);
+
+      this.preview.appendChild(container);
+    }
+
+    //При отмене загрузик подчищаем превью и закрываем модалку
+
+  }, {
+    key: 'uploadCancel',
+    value: function uploadCancel() {
+      this.modal.close();
+      this.removePreviewImg();
+    }
+  }, {
+    key: 'upload',
+    value: function upload() {
+      var _this8 = this;
+
+      if (!this.imgToUpload) {
+        this.errorField.textContent = 'Attach an image!';
+        return;
+      }
+      if (!this.uidInput.value) {
+        this.errorField.textContent = 'Enter the UID!';
+        return;
+      }
+      if (this.imgToUpload.type.indexOf('png') === -1) {
+        this.errorField.textContent = 'You can only upload an PNG image';
+        return;
+      }
+
+      preloader.open();
+
+      var formdata = new FormData(this.preview.querySelector('form'));
+      formdata.append('image', this.imgToUpload);
+
+      connection.uploadItem(formdata).then(function () {
+        preloader.close();
+        _this8.modal.close();
+        _this8.removePreviewImg();
+      });
+    }
+  }, {
+    key: 'init',
+    value: function init() {
+      var _this9 = this;
+
+      //Обработка загрузки картинки через инпут
+      this.input.addEventListener('change', function (e) {
+        e.preventDefault();
+
+        if (e.target.files[0].type.indexOf('png') === -1) {
+          _this9.errorField.textContent = 'You can only upload an PNG image';
+          return;
+        } else _this9.errorField.textContent = '';
+
+        _this9.imgToUpload = e.target.files[0];
+        var src = _this9.getPreviewImg(e.currentTarget.files);
+        _this9.showPreviewImg(src);
+        _this9.showPreviewInfo();
+      });
+
+      //Обработка дропа картинки
+      this.dropArea.addEventListener('drop', function (e) {
+        e.preventDefault();
+
+        if (e.dataTransfer.files[0].type.indexOf('png') === -1) {
+          _this9.errorField.textContent = 'You can only upload an PNG image';
+          return;
+        } else _this9.errorField.textContent = '';
+
+        var src = _this9.getPreviewImg(e.dataTransfer.files);
+        _this9.imgToUpload = e.dataTransfer.files[0];
+
+        _this9.showPreviewImg(src);
+        _this9.showPreviewInfo();
+
+        //Уберем стилизующий класс
+        _this9.dropArea.classList.remove('upload-modal__drop-area_dragover');
+      });
+
+      //Стилизация области дропа при dragover
+      this.dropArea.addEventListener('dragover', function (e) {
+        e.preventDefault();
+
+        if (e.target === _this9.dropArea || e.target === _this9.dropAreaInner) {
+          _this9.dropArea.classList.add('upload-modal__drop-area_dragover');
+        }
+      });
+
+      //Делегируем клик по заменителю инпута самому инпуту
+      this.inputReplacer.addEventListener('click', function () {
+        _this9.input.click();
+      });
+
+      //Делегируем клик по дропзоне инпуту
+      this.dropArea.addEventListener('click', function () {
+        _this9.input.click();
+      });
+
+      //Открываем модалку-загрузчик по клику на соотв.кнопке
+      this.modalOpenBtn.addEventListener('click', function () {
+        _this9.modal.open();
+      });
+
+      //Обработка отмены загрузки
+      this.modalUploadCancelBtn.addEventListener('click', function () {
+        _this9.uploadCancel();
+      });
+
+      //Обработка подтверждения загрузки
+      this.form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        _this9.upload();
+      });
+    }
+  }, {
+    key: 'uidInput',
+    get: function get() {
+      return this.form.querySelector('.js-upload-uid');
+    }
+  }, {
+    key: 'descrInput',
+    get: function get() {
+      return this.form.querySelector('.js-upload-description');
+    }
+  }]);
+
+  return ImageLoader;
+}();
+
+var dropArea = new ImageLoader(document.querySelector('.js-drop-area'));
+dropArea.init();
+/****************************************/
+
+/****************************************/
+/****************FEED********************/
+
+/****************************************/
+
+var Feed = function () {
+  function Feed() {
+    _classCallCheck(this, Feed);
+  }
+
+  _createClass(Feed, null, [{
+    key: 'createStat',
+
+
+    //Методы для создания карточки-миниатюры
+    value: function createStat(className, stat) {
+      var td = document.createElement('td');
+
+      var p = document.createElement('p');
+      p.classList.add('stat');
+      td.appendChild(p);
+
+      var icon = document.createElement('span');
+      icon.classList.add(className);
+      p.appendChild(icon);
+
+      var title = document.createElement('span');
+      title.textContent = stat;
+      p.appendChild(title);
+
+      return td;
+    }
+  }, {
+    key: 'createCard',
+    value: function createCard(card) {
+      var likes = card.likes ? Object.keys(card.likes).length : 0;
+      var comments = card.comments ? Object.keys(card.comments).length : 0;
+      var seen = card.seen ? Object.keys(card.seen).length : 0;
+      var art = card.art ? Object.keys(card.art).length : 0;
+
+      var container = document.createElement('div');
+      container.classList.add('card-thumbnail');
+      container.dataset.id = card.id;
+
+      var overlay = document.createElement('div');
+      overlay.classList.add('card-thumbnail__overlay');
+      container.appendChild(overlay);
+
+      var stats = document.createElement('div');
+      stats.classList.add('card-thumbnail__stats', 'stats');
+      container.appendChild(stats);
+
+      var table = document.createElement('table');
+      stats.appendChild(table);
+
+      var row = document.createElement('tr');
+      row.appendChild(Feed.createStat('icon-heart', likes));
+      row.appendChild(Feed.createStat('icon-bubble', comments));
+      table.appendChild(row.cloneNode(true));
+
+      row.textContent = '';
+      row.appendChild(Feed.createStat('icon-eye', seen));
+      row.appendChild(Feed.createStat('icon-pencil', art));
+      table.appendChild(row);
+
+      var img = document.createElement('img');
+      img.src = card.url;
+      container.appendChild(img);
+
+      return container;
+    }
+  }, {
+    key: 'renderFeed',
+    value: function renderFeed(feed) {
+      var counter = 0;
+      var fragment = document.createDocumentFragment();
+      var _iteratorNormalCompletion2 = true;
+      var _didIteratorError2 = false;
+      var _iteratorError2 = undefined;
+
+      try {
+        for (var _iterator2 = feed[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+          var card = _step2.value;
+
+          if (counter === 0) {
+            var newRow = document.createElement('div');
+            newRow.classList.add('row');
+            fragment.appendChild(newRow);
+          }
+          var curr = fragment.lastElementChild;
+
+          var col = document.createElement('div');
+          col.classList.add('col-sm-4');
+          curr.appendChild(col);
+          col.appendChild(Feed.createCard(card));
+
+          ++counter === 3 ? counter = 0 : '';
+        }
+      } catch (err) {
+        _didIteratorError2 = true;
+        _iteratorError2 = err;
+      } finally {
+        try {
+          if (!_iteratorNormalCompletion2 && _iterator2.return) {
+            _iterator2.return();
+          }
+        } finally {
+          if (_didIteratorError2) {
+            throw _iteratorError2;
+          }
+        }
+      }
+
+      Feed.feed.textContent = '';
+      Feed.feed.appendChild(fragment);
+    }
+  }, {
+    key: 'updFeed',
+    value: function updFeed() {
+      preloader.open();
+      connection.getFeed().then(function (res) {
+        return res.json();
+      }).then(function (feed) {
+        return Feed.renderFeed(feed);
+      }).then(function () {
+        return preloader.close();
+      });
+    }
+  }, {
+    key: 'feed',
+    get: function get() {
+      return document.querySelector('.js-feed');
+    }
+  }]);
+
+  return Feed;
+}();
+
+Feed.updFeed();
+
+/****************************************/
+
+/****************************************/
+/***********Творческий режим*************/
+
+/****************************************/
+
+var Art = function () {
+  function Art(controls, parentModal) {
+    var _this10 = this;
+
+    _classCallCheck(this, Art);
+
+    this.parentModal = parentModal;
+    this.imgContainer = this.parentModal.pic;
+    this.img = this.imgContainer.querySelector('img');
+    this.id = this.parentModal.id;
+
+    this.canvas = document.createElement('canvas');
+    this.canvas.height = this.img.clientHeight;
+    this.canvas.width = this.img.clientWidth;
+    this.ctx = this.canvas.getContext('2d');
+
+    this.brushColorInput = controls.querySelector('.art-controls-color');
+    this.brushWidthInput = controls.querySelector('.art-controls-size');
+    this.brushColor = this.brushColorInput.value;
+    this.brushWidth = this.brushWidthInput.value;
+
+    this.ctx.lineJoin = 'round';
+    this.ctx.lineCap = 'round';
+
+    this.shiftPressed = 0; //состояние кнопки Shift (нажато/не нажато)
+    this.needsRepaint = false; //требуется ли перерисовка
+    this.curves = []; //массив зафиксированных при mousemove кривых
+    this.mouseHolded = false; //состояние левой кн. мыши (нажато/не нажато)
+
+    this.socket = connection.artInit(this.id);
+    this.socket.addEventListener('close', function () {
+      _this10.socket = null;
+    });
+    this.socket.addEventListener('error', function () {
+      _this10.socket = null;
+    });
+
+    this.artIsActive = true;
+    this.eventListeners = [];
+
+    this.init();
+  }
+
+  _createClass(Art, [{
+    key: 'repaint',
+    value: function repaint() {
+      //Функция перерисовки всей канвы
+      this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+      var _iteratorNormalCompletion3 = true;
+      var _didIteratorError3 = false;
+      var _iteratorError3 = undefined;
+
+      try {
+        for (var _iterator3 = this.curves[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+          var curve = _step3.value;
+
+          this.circle(curve[0]);
+          this.smoothCurve(curve);
+        }
+      } catch (err) {
+        _didIteratorError3 = true;
+        _iteratorError3 = err;
+      } finally {
+        try {
+          if (!_iteratorNormalCompletion3 && _iterator3.return) {
+            _iterator3.return();
+          }
+        } finally {
+          if (_didIteratorError3) {
+            throw _iteratorError3;
+          }
+        }
+      }
+    }
+  }, {
+    key: 'circle',
+    value: function circle(point) {
+      //Функция рисует и заливает точку по переданным координатам
+      this.ctx.beginPath();
+      this.ctx.arc(point[0], point[1], point[3] / 2, 0, 2 * Math.PI);
+      this.ctx.save();
+      this.ctx.fillStyle = point[2];
+      this.ctx.lineWidth = point[3];
+      this.ctx.fill();
+      this.ctx.restore();
+    }
+  }, {
+    key: 'smoothCurveBetween',
+    value: function smoothCurveBetween(p1, p2) {
+      //Функция добавляет точку для квадратичной кривой Bezier
+      var cpx = (p1[0] + p2[0]) / 2;
+      var cpy = (p1[1] + p2[1]) / 2;
+      this.ctx.quadraticCurveTo(p1[0], p1[1], cpx, cpy);
+    }
+  }, {
+    key: 'smoothCurve',
+    value: function smoothCurve(points) {
+      this.ctx.beginPath();
+
+      this.ctx.moveTo(points[0][0], points[0][1]);
+
+      for (var i = 1; i < points.length - 1; i++) {
+        this.smoothCurveBetween(points[i], points[i + 1]);
+      }
+
+      this.ctx.strokeStyle = points[points.length - 1][2];
+      this.ctx.lineWidth = points[points.length - 1][3];
+      this.ctx.stroke();
+    }
+  }, {
+    key: 'tick',
+    value: function tick() {
+      var _this11 = this;
+
+      this.shiftPressedControl();
+
+      if (this.needsRepaint) {
+        this.repaint();
+        this.needsRepaint = false;
+      }
+      window.requestAnimationFrame(function () {
+        if (_this11.artIsActive) _this11.tick();
+      });
+    }
+  }, {
+    key: 'shiftPressedControl',
+    value: function shiftPressedControl() {
+      var _this12 = this;
+
+      //Следим за нажатием Shift, состояние храним в переменной shiftPressed
+      document.addEventListener('keydown', function (e) {
+        e.shiftKey ? _this12.shiftPressed = 1 : _this12.shiftPressed = 0;
+      });
+      document.addEventListener('keyup', function (e) {
+        e.shiftKey ? _this12.shiftPressed = 1 : _this12.shiftPressed = 0;
+      });
+    }
+  }, {
+    key: 'checkBoundaries',
+    value: function checkBoundaries(target) {
+      if (target !== this.canvas) return 0;
+      return 1;
+    }
+  }, {
+    key: 'createMask',
+    value: function createMask(maskLink) {
+      var img = new Image();
+      var urlCreator = window.URL || window.webkitURL;
+      img.src = maskLink;
+      img.crossOrigin = "Anonymous";
+      img.classList.add('js-mask');
+      img.style.width = this.canvas.width + 'px';
+      img.style.height = this.canvas.height + 'px';
+
+      return img;
+    }
+  }, {
+    key: 'updMask',
+    value: function updMask(maskLink) {
+      var maskImg = this.createMask(maskLink);
+      var oldMaskImg = this.imgContainer.querySelector('.js-mask');
+
+      //если есть старая маска, то ее надо удалить
+      if (oldMaskImg) oldMaskImg.remove();
+
+      this.imgContainer.insertBefore(maskImg, this.canvas);
+    }
+  }, {
+    key: 'sendMask',
+    value: function sendMask(mask) {
+      var _this13 = this;
+
+      mask.toBlob(function (blob) {
+        if (_this13.socket) _this13.socket.send(blob);
+      });
+    }
+  }, {
+    key: 'createMaskLink',
+    value: function createMaskLink(link) {
+      return link.substr(0, link.indexOf('nocache') - 1);
+    }
+  }, {
+    key: 'stopArt',
+    value: function stopArt() {
+      //здесь надо написать выключение арт-режима
+      if (this.socket) this.socket.close();
+      delete this.socket;
+      this.artIsActive = false;
+
+      //отписка от использующих сокет событий событий
+      if (this.eventListeners.length) {
+        this.eventListeners.forEach(function (event) {
+          event.object.removeEventListener(event.type, event.listener);
+        });
+      }
+    }
+  }, {
+    key: 'mergeCanvasWithMask',
+    value: function mergeCanvasWithMask(mask) {
+      var mergedCanvas = this.canvas.cloneNode(false);
+      var ctx = mergedCanvas.getContext('2d');
+      ctx.drawImage(mask, 0, 0);
+      return mergedCanvas;
+    }
+  }, {
+    key: 'canvasUpdateHandler',
+    value: function canvasUpdateHandler(canvas) {
+      //отправить маску, если сокет готов
+      if (this.socket && this.socket.readyState === 1) {
+        var mask = this.imgContainer.querySelector('.js-mask');
+
+        //Если маски нет, то отправляем один канвас, если есть - то сначала объединяем
+        var maskToSend = mask ? this.mergeCanvasWithMask(mask) : canvas;
+
+        this.sendMask(maskToSend);
+      }
+    }
+  }, {
+    key: 'socketMessageHandler',
+    value: function socketMessageHandler(event) {
+      var data = JSON.parse(event.data);
+      if (data.event === 'mask') {
+        var link = data.url;
+        //Ссылка, приходящая в сокете, просто так почему-то не работает
+        var maskLink = this.createMaskLink(link);
+        this.updMask(maskLink);
+      }
+    }
+  }, {
+    key: 'init',
+    value: function init() {
+      var _this14 = this;
+
+      this.imgContainer.appendChild(this.canvas);
+      this.shiftPressedControl(); //запускаем слежение за shift
+
+
+      window.addEventListener('resize', function () {
+        _this14.ctx.lineJoin = 'round';
+        _this14.ctx.lineCap = 'round';
+        _this14.ctx.clearRect(0, 0, _this14.canvas.width, _this14.canvas.height);
+      });
+
+      this.canvas.addEventListener('mousedown', function (e) {
+        e.preventDefault();
+        _this14.mouseHolded = true;
+        var curve = [];
+        curve.push([e.offsetX, e.offsetY, _this14.brushColor, _this14.brushWidth]);
+        _this14.curves.push(curve);
+        _this14.needsRepaint = true;
+      });
+
+      document.addEventListener('mouseup', function () {
+        if (_this14.mouseHolded) {
+          window.editor.emit('update', _this14.canvas);
+          _this14.mouseHolded = false;
+        }
+      });
+
+      this.canvas.addEventListener('mousemove', function (e) {
+        e.preventDefault();
+        if (!_this14.mouseHolded) return;
+        _this14.curves[_this14.curves.length - 1].push([e.offsetX, e.offsetY, _this14.brushColor, _this14.brushWidth]);
+        _this14.needsRepaint = true;
+      });
+
+      this.canvas.addEventListener('dblclick', function (e) {
+        e.preventDefault();
+        _this14.ctx.clearRect(0, 0, _this14.canvas.width, _this14.canvas.height);
+        _this14.curves = [];
+      });
+
+      this.brushColorInput.addEventListener('change', function (e) {
+        _this14.brushColor = e.target.value;
+      });
+      this.brushWidthInput.addEventListener('change', function (e) {
+        _this14.brushWidth = e.target.value;
+      });
+
+      //Отправить маску по событию update на канвасе
+      var bindedCanvasUpdateHandler = this.canvasUpdateHandler.bind(this);
+      this.eventListeners.push({
+        object: window.editor,
+        type: 'update',
+        listener: bindedCanvasUpdateHandler
+      }); //нужно, чтоб при закрытии арт-режима отписаться от события
+      window.editor.addEventListener('update', bindedCanvasUpdateHandler);
+
+      //получить и подставить маску, если сокет ее присылает
+      if (this.socket) {
+        var bindedSocketMessageHandler = this.socketMessageHandler.bind(this);
+        this.eventListeners.push({
+          object: this.socket,
+          type: 'message',
+          listener: bindedSocketMessageHandler
+        });
+        this.socket.addEventListener('message', bindedSocketMessageHandler);
+      }
+
+      //тестовый код, отправляющий маску по нажатию на кнопку
+      // document.querySelector('.test-button').addEventListener('click', () => {
+      //   const mask = this.imgContainer.querySelector('.js-mask');
+      //   const maskToSend = mask ? this.mergeCanvasWithMask(mask) : this.canvas;
+      //   this.sendMask(maskToSend);
+      // });
+
+      //запуск рисовалки
+      this.tick();
+    }
+  }]);
+
+  return Art;
+}();
+
+/****************************************/
+
+/****************************************/
+/***********Модалка просмотрщик**********/
+
+/****************************************/
+
+
+var ShowPicModal = function (_Modal2) {
+  _inherits(ShowPicModal, _Modal2);
+
+  function ShowPicModal(modal) {
+    _classCallCheck(this, ShowPicModal);
+
+    var _this15 = _possibleConstructorReturn(this, (ShowPicModal.__proto__ || Object.getPrototypeOf(ShowPicModal)).call(this, modal));
+
+    _this15.pic = modal.querySelector('.js-image-natural');
+    _this15.likes = modal.querySelector('.js-image-like-counter');
+    _this15.comments = modal.querySelector('.js-image-comment-counter');
+    _this15.seen = modal.querySelector('.js-image-seen-counter');
+    _this15.art = modal.querySelector('.js-art-counter');
+    _this15.author = modal.querySelector('.js-image-author');
+    _this15.postDate = modal.querySelector('.js-image-date');
+    _this15.tags = modal.querySelector('.js-image-hashtags');
+    _this15.commentsList = modal.querySelector('.image-comments');
+    _this15.description = modal.querySelector('.js-image-description');
+
+    _this15.commentForm = modal.querySelector('.js-comment-form');
+    _this15.commentUID = modal.querySelector('.js-comment-uid');
+    _this15.commentUID.value = localStorage.getItem('YellowGalleryUserName') || '';
+    _this15.errorField = modal.querySelector('.js-comment-error');
+
+    _this15.commentMessage = modal.querySelector('.js-comment-message');
+    _this15.controlsInited = false;
+
+    _this15.id = null; //будет хранить id картинки, когда модалка открыта.
+    _this15.controlsInited = false; //хранит состояние initControls
+
+    _this15.artObject = null; //При инициализации арт режима будет хранить экземпляр Art
+
+    _this15.hasMask = false;
+    return _this15;
+  }
+
+  _createClass(ShowPicModal, [{
+    key: 'renderComment',
+    value: function renderComment(author, body) {
+      var container = document.createElement('div');
+      container.classList.add('image-comment');
+
+      var authorSpan = document.createElement('span');
+      authorSpan.classList.add('image-comment-author');
+      authorSpan.textContent = author + ': ';
+      container.appendChild(authorSpan);
+
+      var bodySpan = document.createElement('span');
+      bodySpan.classList.add('image-comment-body');
+      bodySpan.textContent = body;
+      container.appendChild(bodySpan);
+
+      return container;
+    }
+  }, {
+    key: 'updateModalStatsComments',
+    value: function updateModalStatsComments(id) {
+      var _this16 = this;
+
+      return connection.getCard(id).then(function (cardData) {
+        //Статы
+        _this16.likes.textContent = cardData.likes ? Object.keys(cardData.likes).length : 0;
+        _this16.comments.textContent = cardData.comments ? Object.keys(cardData.comments).length : 0;
+        _this16.seen.textContent = cardData.seen ? Object.keys(cardData.seen).length : 0;
+        _this16.art.textContent = cardData.art ? Object.keys(cardData.art).length : 0;
+
+        _this16.commentsList.textContent = '';
+        for (var commentKey in cardData.comments) {
+          _this16.commentsList.appendChild(_this16.renderComment(cardData.comments[commentKey].uid, cardData.comments[commentKey].message));
+        }
+      });
+    }
+  }, {
+    key: 'updateModalData',
+    value: function updateModalData(card) {
+      var _this17 = this;
+
+      return connection.getCard(card.dataset.id).then(function (cardData) {
+        //Картинка
+        _this17.pic.textContent = '';
+        var img = document.createElement('img');
+        img.src = cardData.url;
+        _this17.pic.appendChild(img);
+        return cardData;
+      }).then(function (cardData) {
+        //Статы
+        _this17.likes.textContent = cardData.likes ? Object.keys(cardData.likes).length : 0;
+        _this17.comments.textContent = cardData.comments ? Object.keys(cardData.comments).length : 0;
+        _this17.seen.textContent = cardData.seen ? Object.keys(cardData.seen).length : 0;
+        _this17.art.textContent = cardData.art ? Object.keys(cardData.art).length : 0;
+        return cardData;
+      }).then(function (cardData) {
+        //Остальное
+        _this17.author.textContent = cardData.uid;
+        _this17.postDate.textContent = new Date(cardData.timestamp).toLocaleString();
+        _this17.description.textContent = cardData.description;
+
+        if (cardData.hasOwnProperty('mask')) {
+          _this17.hasMask = true;
+        }
+
+        //Комменты
+        for (var commentKey in cardData.comments) {
+          _this17.commentsList.appendChild(_this17.renderComment(cardData.comments[commentKey].uid, cardData.comments[commentKey].message));
+        }
+      });
+    }
+  }, {
+    key: 'showPic',
+    value: function showPic(card) {
+      var _this18 = this;
+
+      preloader.open();
+      this.id = card.dataset.id;
+      connection.seeItem(this.id).then(function () {
+        _this18.updateModalData(card).then(function () {
+          if (!_this18.controlsInited) {
+            _this18.initControls();
+            _this18.controlsInited = true;
+          }
+        }).then(function () {
+          _this18.open();
+        }).then(function () {
+          preloader.close();
+        });
+      });
+    }
+  }, {
+    key: 'open',
+    value: function open() {
+      this.img = this.pic.querySelector('img');
+      _get(ShowPicModal.prototype.__proto__ || Object.getPrototypeOf(ShowPicModal.prototype), 'open', this).call(this);
+    }
+  }, {
+    key: 'close',
+    value: function close() {
+      this.pic.textContent = '';
+      this.likes.textContent = '';
+      this.comments.textContent = '';
+      this.seen.textContent = '';
+      this.art.textContent = '';
+      this.author.textContent = '';
+      this.postDate.textContent = '';
+      this.tags.textContent = '';
+      this.commentsList.textContent = '';
+      this.description.textContent = '';
+      this.controlsInited = false;
+
+      if (this.artObject) {
+        this.artObject.stopArt();
+      }
+      _get(ShowPicModal.prototype.__proto__ || Object.getPrototypeOf(ShowPicModal.prototype), 'close', this).call(this);
+    }
+  }, {
+    key: 'initControls',
+    value: function initControls() {
+      var _this19 = this;
+
+      if (this.controlsInited) return;
+      this.modal.querySelector('.js-image-like').addEventListener('click', function (e) {
+        e.preventDefault();
+        preloader.open();
+        connection.likeItem(_this19.id).then(function () {
+          _this19.updateModalStatsComments(_this19.id).then(function () {
+            preloader.close();
+          });
+        });
+      });
+
+      this.commentForm.addEventListener('submit', function (e) {
+        e.preventDefault();
+        if (!_this19.commentUID.value || !_this19.commentMessage.value) {
+          _this19.errorField.textContent = 'Не все поля заполнены';
+          return;
+        } else _this19.errorField.textContent = '';
+
+        preloader.open();
+
+        localStorage.setItem('YellowGalleryUserName', _this19.commentUID.value);
+
+        connection.commentItem(_this19.id, _this19.commentUID.value, _this19.commentMessage.value).then(function () {
+          _this19.updateModalStatsComments(_this19.id);
+          _this19.commentMessage.value = '';
+          preloader.close();
+        });
+      });
+    }
+  }, {
+    key: 'init',
+    value: function init() {
+      var _this20 = this;
+
+      document.querySelector('.js-art-on').addEventListener('click', function (e) {
+        var img = _this20.pic;
+        var artTools = _this20.modal.querySelector('.image-art');
+        _this20.artObject = new Art(artTools, _this20);
+      });
+      document.querySelector('.js-art-off').addEventListener('click', function (e) {
+        _this20.pic.textContent = '';
+        _this20.pic.appendChild(_this20.img);
+        _this20.artObject.stopArt();
+        _this20.artObject.active = false;
+      });
+      _get(ShowPicModal.prototype.__proto__ || Object.getPrototypeOf(ShowPicModal.prototype), 'init', this).call(this);
+    }
+  }]);
+
+  return ShowPicModal;
+}(Modal);
+
+var showPicModal = new ShowPicModal(document.querySelector('.js-show-pic-modal'));
+showPicModal.init();
+
+//Ловим клик по миниатюре, используя делегирование событий
+document.querySelector('.js-feed').addEventListener('click', function (e) {
+  var path = e.path || e.composedPath && e.composedPath() || composedPath(e.target);
+  var target = findTargetInPath('card-thumbnail', path);
+  target ? showPicModal.showPic(target) : null;
+});
+
+/****************************************/
