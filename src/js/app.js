@@ -12,6 +12,11 @@ window.editor = {
     }
     this.events[event].push(callback);
   },
+  removeEventListener(event) {
+    if (this.events[event]) {
+      this.events[event] = [];
+    }
+  },
   emit(event, data) {
     if (!this.events[event]) {
       return;
@@ -43,6 +48,16 @@ function throttle(fn, threshhold, scope) {
       fn.apply(context, args);
     }
   };
+}
+
+function findTargetInPath(className, path) {
+  for (const curr of path) {
+    if (curr.classList.contains(className)) {
+      return curr;
+    } else if (curr.tagName === 'BODY') {
+      return null;
+    }
+  }
 }
 
 
@@ -159,18 +174,6 @@ class Server {
   }
 
 
-  updArtState(state, id) {
-    if (state === null) {
-      this.art = null;
-    } else {
-      this.art = {
-        status: true,
-        id: id
-      }
-    }
-  }
-
-
   //Код общения с сервером
   uploadItem(formdata) {
     return fetch(this.baseurl, {
@@ -216,27 +219,30 @@ class Server {
   artInit(id) {
     const socket = new WebSocket(this.wssBaseUrl + id);
 
-    socket.onopen = function () {
+    socket.addEventListener('open', () => {
       wrt("Соединение установлено.");
-    };
+    });
 
-    socket.onclose = function (event) {
+
+    socket.addEventListener('close', event => {
       if (event.wasClean) {
         wrt('Соединение закрыто чисто');
       } else {
         wrt('Обрыв соединения'); // например, "убит" процесс сервера
       }
       wrt('Код: ' + event.code + ' причина: ' + event.reason);
-    };
+    });
 
-    socket.onmessage = function (event) {
+
+    socket.addEventListener('message', function (event) {
       wrt("Получены данные ");
       wrt(JSON.parse(event.data));
-    };
+    });
 
-    socket.onerror = function (error) {
+    socket.addEventListener('error', error => {
       wrt("Ошибка " + error.message);
-    };
+      this.socket = null;
+    });
 
     return socket;
   }
@@ -252,7 +258,6 @@ class Server {
           if (200 <= res.status && res.status < 300) {
             resolve(res.blob());
           } else {
-            wrt(res.status);
             reject();
           }
         });
@@ -277,7 +282,6 @@ class Server {
 
   sendCanvasSocket(canvas, socket) {
     canvas.toBlob(blob => {
-      wrt(blob);
       socket.send(blob);
     });
   }
@@ -300,6 +304,8 @@ class ImageSidebar {
     this.art = document.querySelector('.' + classes.art);
     this.descr = document.querySelector('.' + classes.descr);
     this.state = true;
+
+    this.toggleButtons = document.querySelectorAll('.js-image-sidebar-toggle');
   }
 
   toggle() {
@@ -313,6 +319,14 @@ class ImageSidebar {
       this.state = true;
     }
   }
+
+  sidebarToggleHandler = (e) => {
+    findTargetInPath('js-image-sidebar-toggle', e.path) ? this.toggle() : null;
+  };
+
+  init(){
+    this.sidebar.addEventListener('click', this.sidebarToggleHandler);
+  }
 }
 
 //Инициализируем поведение сайдбара при просмотре картинки
@@ -321,12 +335,7 @@ const imageSidebar = new ImageSidebar({
   art: 'image-art',
   descr: 'image-infoblock'
 });
-
-for (const btn of document.querySelectorAll('.js-image-sidebar-toggle')) {
-  btn.addEventListener('click', () => {
-    imageSidebar.toggle();
-  })
-}
+imageSidebar.init();
 /****************************************/
 
 
@@ -386,7 +395,7 @@ class ImageLoader {
 
 
   showPreviewInfo() {
-    const container = document.createElement('div');
+    const container = document.createElement('form');
     container.classList.add('upload-infoblock');
 
 
@@ -401,6 +410,7 @@ class ImageLoader {
 
     const uidInput = document.createElement('input');
     uidInput.id = 'label-upload-uid';
+    uidInput.name = 'uid';
     uidInput.classList.add('js-upload-uid');
     uidContainer.appendChild(uidInput);
 
@@ -416,6 +426,7 @@ class ImageLoader {
 
     const descriptionInput = document.createElement('textarea');
     descriptionInput.id = 'label-upload-description';
+    descriptionInput.name = 'description';
     descriptionInput.classList.add('js-upload-description');
     descriptionContainer.appendChild(descriptionInput);
 
@@ -446,13 +457,11 @@ class ImageLoader {
 
     preloader.open();
 
-    const formdata = new FormData();
-    formdata.append('uid', this.form.querySelector('.js-upload-uid').value);
-    formdata.append('description', this.form.querySelector('.js-upload-description').value);
+    const formdata = new FormData(this.preview.querySelector('form'));
     formdata.append('image', this.imgToUpload);
 
     connection.uploadItem(formdata)
-      .then(data => {
+      .then( () => {
         preloader.close();
         this.modal.close();
         this.removePreviewImg();
@@ -652,12 +661,11 @@ Feed.updFeed();
 
 /****************************************/
 class Art {
-  constructor(controls, showPicModal) {
-    this.parentModal = showPicModal;
+  constructor(controls, parentModal) {
+    this.parentModal = parentModal;
     this.imgContainer = this.parentModal.pic;
     this.img = this.imgContainer.querySelector('img');
     this.id = this.parentModal.id;
-    this.active = true;
 
     this.canvas = document.createElement('canvas');
     this.canvas.height = this.img.clientHeight;
@@ -675,10 +683,19 @@ class Art {
     this.shiftPressed = 0; //состояние кнопки Shift (нажато/не нажато)
     this.needsRepaint = false; //требуется ли перерисовка
     this.curves = []; //массив зафиксированных при mousemove кривых
-    this.mouseHolded = 0; //состояние левой кн. мыши (нажато/не нажато)
+    this.mouseHolded = false; //состояние левой кн. мыши (нажато/не нажато)
 
-    // this.socket = connection.artInit(this.id);
-    // this.socket.addEventListener('open', ()=>{this.init()});
+    this.socket = connection.artInit(this.id);
+    this.socket.addEventListener('close', () => {
+      this.socket = null;
+    });
+    this.socket.addEventListener('error', () => {
+      this.socket = null;
+    });
+
+    this.artIsActive = true;
+    this.eventListeners = [];
+
     this.init();
   }
 
@@ -732,7 +749,8 @@ class Art {
       this.needsRepaint = false;
     }
     window.requestAnimationFrame(() => {
-      this.tick();
+      if (this.artIsActive)
+        this.tick();
     });
   }
 
@@ -752,38 +770,92 @@ class Art {
     return 1;
   }
 
-  setMask() {
-    return connection.getMask(this.id)
-      .then(data => {
-        const img = new Image();
-        const urlCreator = window.URL || window.webkitURL;
-        img.src = urlCreator.createObjectURL(data);
-        img.crossOrigin = "Anonymous";
-        img.classList.add('js-mask');
-        img.style.width = this.canvas.width + 'px';
-        img.style.height = this.canvas.height + 'px';
 
-        img.onload = () => {
-          const oldMask = this.imgContainer.querySelector('.js-mask');
-          if (oldMask)
-            oldMask.remove();
-          if (this.active)
-            this.imgContainer.insertBefore(img, this.canvas);
-        }
-      });
+  createMask(maskLink) {
+    const img = new Image();
+    const urlCreator = window.URL || window.webkitURL;
+    img.src = maskLink;
+    img.crossOrigin = "Anonymous";
+    img.classList.add('js-mask');
+    img.style.width = this.canvas.width + 'px';
+    img.style.height = this.canvas.height + 'px';
+
+    return img;
+  }
+
+  updMask(maskLink) {
+    const maskImg = this.createMask(maskLink);
+    const oldMaskImg = this.imgContainer.querySelector('.js-mask');
+
+    //если есть старая маска, то ее надо удалить
+    if (oldMaskImg)
+      oldMaskImg.remove();
+
+    this.imgContainer.insertBefore(maskImg, this.canvas);
+  }
+
+  sendMask(mask){
+    mask.toBlob(blob => {
+      if (this.socket)
+        this.socket.send(blob);
+    });
+  }
+
+  createMaskLink(link){
+    return link.substr(0, (link.indexOf('nocache') - 1));
   }
 
 
   stopArt() {
-    clearInterval(this.maskInterval);
-    this.active = false;
+    //здесь надо написать выключение арт-режима
+    if (this.socket)
+      this.socket.close();
+      delete this.socket;
+    this.artIsActive = false;
+
+    //отписка от использующих сокет событий событий
+    if (this.eventListeners.length) {
+      this.eventListeners.forEach(function (event) {
+        event.object.removeEventListener(event.type, event.listener);
+      });
+    }
   }
+
+
+  mergeCanvasWithMask(mask) {
+    const mergedCanvas = this.canvas.cloneNode(false);
+    const ctx = mergedCanvas.getContext('2d');
+    ctx.drawImage(mask, 0, 0);
+    return mergedCanvas;
+  }
+
+  canvasUpdateHandler(canvas) {
+    //отправить маску, если сокет готов
+    if (this.socket && this.socket.readyState === 1) {
+      const mask = this.imgContainer.querySelector('.js-mask');
+
+      //Если маски нет, то отправляем один канвас, если есть - то сначала объединяем
+      const maskToSend = mask ? this.mergeCanvasWithMask(mask) : canvas;
+
+      this.sendMask(maskToSend);
+    }
+  };
+
+
+  socketMessageHandler(event) {
+    const data = JSON.parse(event.data);
+    if (data.event === 'mask') {
+      const link = data.url;
+      //Ссылка, приходящая в сокете, просто так почему-то не работает
+      const maskLink = this.createMaskLink(link);
+      this.updMask(maskLink);
+    }
+  };
 
   init() {
     this.imgContainer.appendChild(this.canvas);
     this.shiftPressedControl(); //запускаем слежение за shift
 
-    this.parentModal.hasMask ? preloader.open() : null;
 
     window.addEventListener('resize', () => {
       this.ctx.lineJoin = 'round';
@@ -793,7 +865,7 @@ class Art {
 
     this.canvas.addEventListener('mousedown', e => {
       e.preventDefault();
-      this.mouseHolded = 1;
+      this.mouseHolded = true;
       const curve = [];
       curve.push([e.offsetX, e.offsetY, this.brushColor, this.brushWidth]);
       (this.curves).push(curve);
@@ -801,8 +873,10 @@ class Art {
     });
 
     document.addEventListener('mouseup', () => {
-      this.mouseHolded = 0;
-      window.editor.emit('update', this.canvas);
+      if (this.mouseHolded) {
+        window.editor.emit('update', this.canvas);
+        this.mouseHolded = false;
+      }
     });
 
     this.canvas.addEventListener('mousemove', e => {
@@ -825,44 +899,34 @@ class Art {
       this.brushWidth = e.target.value;
     });
 
-    window.editor.addEventListener('update', throttle((canvas) => {
-      const mask = this.imgContainer.querySelector('.js-mask');
-      if (mask) {
-        const tmpCanvas = document.createElement('canvas');
-        tmpCanvas.width = this.canvas.width;
-        tmpCanvas.height = this.canvas.height;
-        const ctx = tmpCanvas.getContext('2d');
-        ctx.drawImage(mask, 0, 0);
-        ctx.drawImage(canvas, 0, 0);
+    //Отправить маску по событию update на канвасе
+    const bindedCanvasUpdateHandler = this.canvasUpdateHandler.bind(this);
+    this.eventListeners.push({
+      object: window.editor,
+      type: 'update',
+      listener: bindedCanvasUpdateHandler
+    }); //нужно, чтоб при закрытии арт-режима отписаться от события
+    window.editor.addEventListener('update', bindedCanvasUpdateHandler);
 
-        // connection.sendCanvasSocket(tmpCanvas, socket);
-        connection.sendCanvas(tmpCanvas, this.id)
-          .then( () => {
-            this.maskInterval = setInterval(this.setMask.bind(this), 3000);
-          } );
-      } else {
-        // connection.sendCanvasSocket(canvas, socket);
-        connection.sendCanvas(canvas, this.id)
-          .then( () => {
-            this.maskInterval = setInterval(this.setMask.bind(this), 3000);
-          } );
-      }
-    }, 3000, this));
-
-
-    if (this.parentModal.hasMask){
-      this.setMask()
-        .then(() => {
-          preloader.close();
-          wrt('NOT catched');
-        })
-        .catch(() => {
-          wrt('catched');
-          preloader.close();
-        });
-      this.maskInterval = setInterval(this.setMask.bind(this), 3000);
+    //получить и подставить маску, если сокет ее присылает
+    if (this.socket) {
+      const bindedSocketMessageHandler = this.socketMessageHandler.bind(this);
+      this.eventListeners.push({
+        object: this.socket,
+        type: 'message',
+        listener: bindedSocketMessageHandler
+      });
+      this.socket.addEventListener('message', bindedSocketMessageHandler);
     }
 
+    //тестовый код, отправляющий маску по нажатию на кнопку
+    // document.querySelector('.test-button').addEventListener('click', () => {
+    //   const mask = this.imgContainer.querySelector('.js-mask');
+    //   const maskToSend = mask ? this.mergeCanvasWithMask(mask) : this.canvas;
+    //   this.sendMask(maskToSend);
+    // });
+
+    //запуск рисовалки
     this.tick();
   }
 }
@@ -943,7 +1007,6 @@ class ShowPicModal extends Modal {
   updateModalData(card) {
     return connection.getCard(card.dataset.id)
       .then(cardData => {
-        wrt(cardData);
         //Картинка
         this.pic.textContent = '';
         const img = document.createElement('img');
@@ -965,7 +1028,7 @@ class ShowPicModal extends Modal {
         this.postDate.textContent = new Date(cardData.timestamp).toLocaleString();
         this.description.textContent = cardData.description;
 
-        if (cardData.hasOwnProperty('mask')){
+        if (cardData.hasOwnProperty('mask')) {
           this.hasMask = true;
         }
 
@@ -1082,14 +1145,8 @@ showPicModal.init();
 
 //Ловим клик по миниатюре, используя делегирование событий
 document.querySelector('.js-feed').addEventListener('click', (e) => {
-  for (const curr of e.path) {
-    if (curr.classList.contains('card-thumbnail')) {
-      showPicModal.showPic(curr);
-      break;
-    } else if (curr.tagName === 'BODY') {
-      break; //не поймали, выходим из цикла
-    }
-  }
+  const target = findTargetInPath('card-thumbnail', e.path);
+  target ? showPicModal.showPic(target) : null;
 });
 
 /****************************************/

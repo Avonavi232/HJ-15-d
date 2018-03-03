@@ -4,7 +4,7 @@ function wrt(d) {
   console.log(d);
 }
 
-const wssUrl = 'wss://neto-api.herokuapp.com/yellowgallery/1f5fb470-ff28-11e7-9f10-19bd8572c366';
+const wssUrl = 'wss://neto-api.herokuapp.com/yellowgallery/68dad5c0-ff2e-11e7-89e2-afe5096586a4';
 
 const canvas = document.createElement('canvas');
 const ctx = canvas.getContext('2d');
@@ -19,8 +19,17 @@ const socket = new WebSocket(wssUrl);
 
 socket.onopen = function() {
   wrt("Соединение установлено.");
+};
 
-  socket.send('hello');
+socket.onmessage = function(event) {
+  wrt("Получены данные");
+  const data = JSON.parse(event.data);
+  wrt(data);
+  if (data.event === 'mask') {
+    wrt("Картинка обновлена");
+    const str = data.url.substr(0, (data.url.indexOf('nocache') - 1));
+    document.querySelector('.test-image').src = str;
+  }
 };
 
 socket.onclose = function(event) {
@@ -32,10 +41,15 @@ socket.onclose = function(event) {
   wrt('Код: ' + event.code + ' причина: ' + event.reason);
 };
 
-socket.onmessage = function(event) {
-  wrt("Получены данные");
-  wrt(event);
-};
+document.querySelector('.test-button').addEventListener('click', function () {
+  wrt('socket:status: ' + socket.readyState);
+  canvas.toBlob(blob => {
+    wrt("Отправляем");
+    wrt(blob);
+    socket.send(blob);
+  });
+});
+
 
 
 
